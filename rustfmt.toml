@@ -1,0 +1,6 @@
+tab_spaces = 2
+hard_tabs = true
+format_strings = true
+imports_layout = 'Vertical'
+group_imports = 'StdExternalCrate'
+imports_granularity = 'Crate'

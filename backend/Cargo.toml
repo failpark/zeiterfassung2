@@ -1,0 +1,26 @@
+[package]
+name = "zeiterfassung-backend"
+version = "0.0.1"
+edition = "2021"
+repository = "https://github.com/Failpark/zeiterfassung2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+argon2 = "0.5.2"
+diesel = { version = "2.1.4", features = ["chrono", "mysql"] }
+dsync = { version = "0.0.16", features = ["async"] }
+jwt-simple = "0.11.9"
+rocket = { version = "0.5.0", features = ["json"] }
+rocket_cors = "0.6.0"
+rocket_db_pools = { version = "0.1.0", features = ["diesel_mysql"] }
+thiserror = "1.0.50"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+typeshare = "1.0.1"
+
+[dev-dependencies]
+fake = "2.9.1"
+pretty_assertions = "1.4.0"
+test-case = "3.3.1"
