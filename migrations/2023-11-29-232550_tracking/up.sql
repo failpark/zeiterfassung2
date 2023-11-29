@@ -1,0 +1,25 @@
+CREATE TABLE tracking (
+	id INTEGER AUTO_INCREMENT NOT NULL,
+	client_id INTEGER NOT NULL,
+	user_id INTEGER NOT NULL,
+	project_id INTEGER NOT NULL,
+	date DATE NOT NULL,
+	begin TIME NOT NULL,
+	end TIME NOT NULL,
+	pause TIME,
+	performed FLOAT(4,2) NOT NULL,
+	billed FLOAT(4,2) NOT NULL,
+	description TEXT,
+	created_at TIMESTAMP NOT NULL
+		DEFAULT CURRENT_TIMESTAMP,
+	last_updated TIMESTAMP NOT NULL
+		DEFAULT CURRENT_TIMESTAMP
+		ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	FOREIGN KEY (client_id)
+		REFERENCES client(id),
+	FOREIGN KEY (user_id)
+		REFERENCES user(id),
+	FOREIGN KEY (project_id)
+		REFERENCES project(id)
+);

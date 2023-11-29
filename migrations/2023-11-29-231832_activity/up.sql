@@ -1,0 +1,63 @@
+CREATE TABLE activity (
+	id INTEGER AUTO_INCREMENT NOT NULL,
+	token VARCHAR(255),
+	name VARCHAR(255) NOT NULL,
+	created_at TIMESTAMP NOT NULL
+		DEFAULT CURRENT_TIMESTAMP,
+	last_updated TIMESTAMP NOT NULL
+		DEFAULT CURRENT_TIMESTAMP
+		ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id)
+);
+
+INSERT INTO activity (token, name) VALUES
+	('AE', 'Abstimmung per E-Mail'),
+	('AI', 'Abstimmung intern'),
+	('AP', 'Abstimmung persönlich'),
+	('AT', 'Abstimmung telefonisch'),
+	('CG', 'Coaching-Gespräch'),
+	('OE', 'Organisation-Entwicklung'),
+	('PS', 'Projektsteuerung'),
+	('VA', 'Vertriebsarbeit'),
+	('VP', 'Vertriebs-Planung'),
+	('VS', 'Vertriebs-Steuerung'),
+	('VT', 'Vertriebsarbeit telefonisch');
+INSERT INTO activity (name) VALUES
+	('Beratung'),
+	('Bewerbungsgespräch'),
+	('Briefing'),
+	('Daten bearbeiten'),
+	('Delegation'),
+	('Dokumentation'),
+	('executive sparring'),
+	('E-Mail-Bearbeitung'),
+	('Einarbeitung in Thema \ Kunde'),
+	('Fahrzeit'),
+	('Fotoprotokoll erstellen'),
+	('Geschäftsplanung'),
+	('Hospitation'),
+	('Insights Profil-Besprechung'),
+	('Interview/Einzelgespräch'),
+	('Konzeption'),
+	('Marketing-Planung'),
+	('Marketing-Steuerung'),
+	('Meeting'),
+	('Moderation'),
+	('Nachbereitung'),
+	('privat'),
+	('Pause'),
+	('Personal'),
+	('Planung/Organisation'),
+	('Projektplan'),
+	('Protokoll schreiben'),
+	('PR-Arbeit'),
+	('Recherche'),
+	('Reporting'),
+	('Social Media Kanäle pflegen'),
+	('Supervision'),
+	('Technik'),
+	('Telko - Telefonkonferenz'),
+	('Textarbeit'),
+	('Vorbereitung'),
+	('Wiedervorlagen bearbeitet'),
+	('Workshop');

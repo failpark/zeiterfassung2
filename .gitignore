@@ -2,3 +2,4 @@
 Rocket.toml
 /.vscode
 Cargo.lock
+.env
