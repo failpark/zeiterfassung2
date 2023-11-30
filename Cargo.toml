@@ -1,7 +1,5 @@
 [workspace]
-members = [
-	"backend",
-]
+members = ["backend"]
 resolver = "2"
 
 # Config for 'cargo dist'

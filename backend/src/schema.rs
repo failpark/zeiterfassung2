@@ -8,7 +8,7 @@ diesel::table! {
         #[max_length = 255]
         name -> Varchar,
         created_at -> Timestamp,
-        last_updated -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -18,7 +18,7 @@ diesel::table! {
         #[max_length = 255]
         name -> Varchar,
         created_at -> Timestamp,
-        last_updated -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -28,7 +28,7 @@ diesel::table! {
         #[max_length = 255]
         name -> Varchar,
         created_at -> Timestamp,
-        last_updated -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -46,7 +46,7 @@ diesel::table! {
         billed -> Float,
         description -> Nullable<Text>,
         created_at -> Timestamp,
-        last_updated -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -74,7 +74,7 @@ diesel::table! {
         #[max_length = 255]
         sys_role -> Varchar,
         created_at -> Timestamp,
-        last_updated -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
