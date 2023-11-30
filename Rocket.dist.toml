@@ -1,0 +1,3 @@
+[default]
+# databases.zeiterfassung.url = mysql://user:password@hostname:port/database
+# secret_key = openssl rand -base64 32
