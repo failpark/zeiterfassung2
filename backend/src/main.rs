@@ -6,6 +6,8 @@ use rocket::{
 };
 use rocket_db_pools::Database;
 mod db;
+mod models;
+mod schema;
 pub use db::DB;
 use rocket_cors::CorsOptions;
 

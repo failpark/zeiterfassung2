@@ -6,21 +6,26 @@ repository = "https://github.com/Failpark/zeiterfassung2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-# [[bin]]
-# name = "dsync"
-# path = "bin/dsync.rs"
+[[bin]]
+name = "dsync"
+path = "bin/dsync.rs"
 
 [dependencies]
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 argon2 = "0.5.2"
+chrono = { version = "0.4.31", features = ["serde"] }
 diesel = { version = "2.1.4", features = ["chrono", "mysql"] }
 diesel_migrations = "2.1.0"
 # samefile option is not stable!
 # dsync = { version = "0.0.17", features = ["async"] }
+dsync = { git = "https://github.com/Wulf/dsync", rev = "07e32f3", features = [
+	"async",
+] }
 jwt-simple = "0.11.9"
 rocket = { version = "0.5.0", features = ["json"] }
 rocket_cors = "0.6.0"
 rocket_db_pools = { version = "0.1.0", features = ["diesel_mysql"] }
+serde = "1.0.193"
 thiserror = "1.0.50"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
