@@ -1,0 +1,41 @@
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - ".github/workflows/commit.yml"
+      - "migrations/**"
+      - "backend/**"
+  workflow_dispatch:
+    branches:
+      - 'dev'
+
+name: Commit
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-stable:
+    name: Build on stable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Build
+        run: cargo build --release
+      - name: Linting
+        run: cargo clippy -- --deny warnings
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - name: Formatting
+        run: cargo fmt --all -- --check
