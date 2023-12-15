@@ -1,3 +1,12 @@
+use argon2::{
+	password_hash::{
+		PasswordHash,
+		PasswordHasher,
+		PasswordVerifier,
+		SaltString,
+	},
+	Argon2,
+};
 use rocket_db_pools::diesel::{
 	insert_into,
 	prelude::*,
@@ -92,6 +101,31 @@ pub struct PaginationResult<T> {
 }
 
 impl User {
+	/// Gets the Hash from the database where email matches,
+	/// hashes the password and compares newly generated hash
+	/// with hash from the database
+	pub async fn check_credentials(
+		db: &mut ConnectionType,
+		email: &str,
+		password: &str,
+	) -> anyhow::Result<Self> {
+		use crate::schema::user::dsl;
+
+		let rec = dsl::user
+			.filter(dsl::email.eq(email))
+			.first::<Self>(db)
+			.await?;
+		let hash = PasswordHash::new(&rec.hash);
+		if hash.is_err() {
+			return Err(anyhow::Error::msg("Hash is invalid"));
+		}
+		let hash = hash.unwrap();
+		match argon2::Argon2::default().verify_password(password.as_bytes(), &hash) {
+			Ok(_) => Ok(rec),
+			Err(_) => Err(anyhow::Error::msg("Wrong credentials")),
+		}
+	}
+
 	/// Insert a new row into `user` with a given [`CreateUser`]
 	pub async fn create(db: &mut ConnectionType, item: &CreateUser) -> QueryResult<Self> {
 		use crate::schema::user::dsl::*;

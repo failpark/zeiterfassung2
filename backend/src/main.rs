@@ -5,8 +5,11 @@ use rocket::{
 	Rocket,
 };
 use rocket_db_pools::Database;
+mod auth;
 mod db;
+mod error;
 mod models;
+mod routes;
 mod schema;
 pub use db::DB;
 use rocket_cors::CorsOptions;
@@ -25,4 +28,8 @@ fn rocket() -> _ {
 		)
 		.attach(DB::init())
 		.attach(AdHoc::on_ignite("Run Migrations", db::run_migrations))
+		.manage(auth::Tokenizer::new(std::time::Duration::new(
+			5 * 24 * 60 * 60,
+			0,
+		)))
 }
