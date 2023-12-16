@@ -1,5 +1,6 @@
 // use crate::Error;
 use jwt_simple::prelude::*;
+use tracing::error;
 
 use crate::models::user::User;
 
@@ -40,11 +41,15 @@ impl Tokenizer {
 	/// `Error::JWTSign` is only thrown here. We don't have to care what exactly
 	/// is thrown here since JWTSign points here
 	pub fn generate(&self, user: User) -> anyhow::Result<String> {
+		trace!("Generating Token for User: {:?}", user.id);
 		let claims = Claims::with_custom_claims(user, self.exp);
 
 		match self.key_pair.sign(claims) {
 			Ok(signed_token) => Ok(signed_token),
-			Err(err) => Err(err),
+			Err(err) => {
+				error!("Error while signing Token: {:?}", err);
+				Err(err)
+			}
 		}
 	}
 
@@ -52,6 +57,16 @@ impl Tokenizer {
 	/// Returns `Ok` if the Token could be verified
 	/// `Err` if Token is invalid
 	pub fn verify(&self, token: &str) -> anyhow::Result<User> {
-		Ok(self.pub_key.verify_token::<User>(token, None)?.custom)
+		let verify = self.pub_key.verify_token::<User>(token, None);
+		match verify {
+			Ok(verify) => {
+				trace!("Verified Token for User: {:?}", verify.custom.id);
+				Ok(verify.custom)
+			}
+			Err(err) => {
+				error!("Error while verifying Token: {:?}", err);
+				Err(err)
+			}
+		}
 	}
 }

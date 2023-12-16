@@ -133,6 +133,7 @@ impl Tracking {
 	pub async fn create(db: &mut ConnectionType, item: &CreateTracking) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
+		trace!("Inserting into tracking table: {:?}", item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				insert_into(tracking)
@@ -153,6 +154,7 @@ impl Tracking {
 	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
+		trace!("Reading from tracking table: {}", param_id);
 		tracking.filter(id.eq(param_id)).first::<Self>(db).await
 	}
 
@@ -164,6 +166,11 @@ impl Tracking {
 	) -> QueryResult<PaginationResult<Self>> {
 		use crate::schema::tracking::dsl::*;
 
+		trace!(
+			"Paginating through tracking table: page {}, page_size {}",
+			page,
+			page_size
+		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = tracking.count().get_result(db).await?;
 		let items = tracking
@@ -190,6 +197,7 @@ impl Tracking {
 	) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
+		trace!("Updating tracking table: {} with {:?}", param_id, item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				diesel::update(tracking.filter(id.eq(param_id)))
@@ -209,6 +217,7 @@ impl Tracking {
 	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::tracking::dsl::*;
 
+		trace!("Deleting from tracking table: {}", param_id);
 		diesel::delete(tracking.filter(id.eq(param_id)))
 			.execute(db)
 			.await

@@ -67,6 +67,7 @@ impl Client {
 	pub async fn create(db: &mut ConnectionType, item: &CreateClient) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
+		trace!("Inserting into client table: {:?}", item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				insert_into(client).values(item).execute(&mut conn).await?;
@@ -84,6 +85,7 @@ impl Client {
 	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
+		trace!("Reading from client table: {:?}", param_id);
 		client.filter(id.eq(param_id)).first::<Self>(db).await
 	}
 
@@ -95,6 +97,11 @@ impl Client {
 	) -> QueryResult<PaginationResult<Self>> {
 		use crate::schema::client::dsl::*;
 
+		trace!(
+			"Paginating through client table: page {}, page_size {}",
+			page,
+			page_size
+		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = client.count().get_result(db).await?;
 		let items = client
@@ -121,6 +128,7 @@ impl Client {
 	) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
+		trace!("Updating client table: {} with {:?}", param_id, item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				diesel::update(client.filter(id.eq(param_id)))
@@ -142,6 +150,7 @@ impl Client {
 	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::client::dsl::*;
 
+		trace!("Deleting from client table: {}", param_id);
 		diesel::delete(client.filter(id.eq(param_id)))
 			.execute(db)
 			.await

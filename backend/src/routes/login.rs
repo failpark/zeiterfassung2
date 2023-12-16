@@ -20,6 +20,7 @@ pub struct LoginResponder {
 
 impl LoginResponder {
 	pub fn new(inner: String) -> Self {
+		trace!("LoginResponder::new({:?})", inner);
 		Self {
 			inner: format!("{{\"token\": \"{inner}\"}}"),
 		}

@@ -18,7 +18,7 @@ use serde::ser::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-/// Smorgasbord of various errors in this application
+#[allow(clippy::upper_case_acronyms)]
 pub enum Error {
 	#[error("Database Error: {0}")]
 	Database(#[from] diesel::result::Error),

@@ -79,6 +79,7 @@ impl TrackingToActivity {
 	) -> QueryResult<Self> {
 		use crate::schema::tracking_to_activity::dsl::*;
 
+		trace!("Inserting into tracking_to_activity table: {:?}", item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				insert_into(tracking_to_activity)
@@ -99,6 +100,7 @@ impl TrackingToActivity {
 	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::tracking_to_activity::dsl::*;
 
+		trace!("Reading from tracking_to_activity table: {:?}", param_id);
 		tracking_to_activity
 			.filter(id.eq(param_id))
 			.first::<Self>(db)
@@ -113,6 +115,11 @@ impl TrackingToActivity {
 	) -> QueryResult<PaginationResult<Self>> {
 		use crate::schema::tracking_to_activity::dsl::*;
 
+		trace!(
+			"Paginating through tracking_to_activity table: page {}, page_size {}",
+			page,
+			page_size
+		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = tracking_to_activity.count().get_result(db).await?;
 		let items = tracking_to_activity
@@ -139,6 +146,11 @@ impl TrackingToActivity {
 	) -> QueryResult<Self> {
 		use crate::schema::tracking_to_activity::dsl::*;
 
+		trace!(
+			"Updating tracking_to_activity table: {} with {:?}",
+			param_id,
+			item
+		);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				diesel::update(tracking_to_activity.filter(id.eq(param_id)))
@@ -158,6 +170,7 @@ impl TrackingToActivity {
 	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::tracking_to_activity::dsl::*;
 
+		trace!("Deleting from tracking_to_activity table: {}", param_id);
 		diesel::delete(tracking_to_activity.filter(id.eq(param_id)))
 			.execute(db)
 			.await

@@ -73,6 +73,7 @@ impl Activity {
 	pub async fn create(db: &mut ConnectionType, item: &CreateActivity) -> QueryResult<Self> {
 		use crate::schema::activity::dsl::*;
 
+		trace!("Inserting into activity table: {:?}", item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				insert_into(activity)
@@ -93,6 +94,7 @@ impl Activity {
 	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::activity::dsl::*;
 
+		trace!("Reading from activity table: {}", param_id);
 		activity.filter(id.eq(param_id)).first::<Self>(db).await
 	}
 
@@ -104,6 +106,11 @@ impl Activity {
 	) -> QueryResult<PaginationResult<Self>> {
 		use crate::schema::activity::dsl::*;
 
+		trace!(
+			"Paginating through activity table: page {}, page_size {}",
+			page,
+			page_size
+		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = activity.count().get_result(db).await?;
 		let items = activity
@@ -130,6 +137,7 @@ impl Activity {
 	) -> QueryResult<Self> {
 		use crate::schema::activity::dsl::*;
 
+		trace!("Updating activity table: {} with {:?}", param_id, item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				diesel::update(activity.filter(id.eq(param_id)))
@@ -149,6 +157,7 @@ impl Activity {
 	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::activity::dsl::*;
 
+		trace!("Deleting from activity table: {}", param_id);
 		diesel::delete(activity.filter(id.eq(param_id)))
 			.execute(db)
 			.await

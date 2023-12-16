@@ -66,6 +66,7 @@ impl Project {
 	pub async fn create(db: &mut ConnectionType, item: &CreateProject) -> QueryResult<Self> {
 		use crate::schema::project::dsl::*;
 
+		trace!("Inserting into project table: {:?}", item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				insert_into(project).values(item).execute(&mut conn).await?;
@@ -83,6 +84,7 @@ impl Project {
 	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::project::dsl::*;
 
+		trace!("Reading from project table: {:?}", param_id);
 		project.filter(id.eq(param_id)).first::<Self>(db).await
 	}
 
@@ -94,6 +96,11 @@ impl Project {
 	) -> QueryResult<PaginationResult<Self>> {
 		use crate::schema::project::dsl::*;
 
+		trace!(
+			"Paginating through project table: page {}, page_size {}",
+			page,
+			page_size
+		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = project.count().get_result(db).await?;
 		let items = project
@@ -120,6 +127,7 @@ impl Project {
 	) -> QueryResult<Self> {
 		use crate::schema::project::dsl::*;
 
+		trace!("Updating project table: {} with {:?}", param_id, item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				diesel::update(project.filter(id.eq(param_id)))
@@ -139,6 +147,7 @@ impl Project {
 	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::project::dsl::*;
 
+		trace!("Deleting from project table: {:?}", param_id);
 		diesel::delete(project.filter(id.eq(param_id)))
 			.execute(db)
 			.await

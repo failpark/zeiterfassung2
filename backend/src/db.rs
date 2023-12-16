@@ -21,6 +21,7 @@ pub async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
 		MigrationHarness,
 	};
 
+	trace!("Running migrations");
 	const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../migrations");
 
 	let db_url: String = rocket

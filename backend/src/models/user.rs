@@ -1,16 +1,12 @@
-use argon2::{
-	password_hash::{
-		PasswordHash,
-		PasswordHasher,
-		PasswordVerifier,
-		SaltString,
-	},
-	Argon2,
+use argon2::password_hash::{
+	PasswordHash,
+	PasswordVerifier,
 };
 use rocket_db_pools::diesel::{
 	insert_into,
 	prelude::*,
 };
+use tracing::debug;
 
 use super::last_insert_id;
 use crate::schema::*;
@@ -111,18 +107,30 @@ impl User {
 	) -> anyhow::Result<Self> {
 		use crate::schema::user::dsl;
 
+		trace!("Checking credentials for {}", email);
 		let rec = dsl::user
 			.filter(dsl::email.eq(email))
 			.first::<Self>(db)
 			.await?;
+		debug!("Found user: {:?}", rec.username);
 		let hash = PasswordHash::new(&rec.hash);
 		if hash.is_err() {
+			error!(
+				"Hash is invalid.\nuser: {}\nhash: {}\npassword: {}",
+				rec.username, rec.hash, password
+			);
 			return Err(anyhow::Error::msg("Hash is invalid"));
 		}
 		let hash = hash.unwrap();
 		match argon2::Argon2::default().verify_password(password.as_bytes(), &hash) {
-			Ok(_) => Ok(rec),
-			Err(_) => Err(anyhow::Error::msg("Wrong credentials")),
+			Ok(_) => {
+				trace!("Logged in as {}", rec.username);
+				Ok(rec)
+			}
+			Err(_) => {
+				trace!("Wrong credentials for {}", email);
+				Err(anyhow::Error::msg("Wrong credentials"))
+			}
 		}
 	}
 
@@ -130,6 +138,7 @@ impl User {
 	pub async fn create(db: &mut ConnectionType, item: &CreateUser) -> QueryResult<Self> {
 		use crate::schema::user::dsl::*;
 
+		trace!("Inserting into user table: {:?}", item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				insert_into(user).values(item).execute(&mut conn).await?;
@@ -146,7 +155,7 @@ impl User {
 	/// Get a row from `user`, identified by the primary key
 	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::user::dsl::*;
-
+		trace!("Reading from user table: {}", param_id);
 		user.filter(id.eq(param_id)).first::<Self>(db).await
 	}
 
@@ -158,6 +167,11 @@ impl User {
 	) -> QueryResult<PaginationResult<Self>> {
 		use crate::schema::user::dsl::*;
 
+		trace!(
+			"Paginating through user table: page {}, page_size {}",
+			page,
+			page_size
+		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = user.count().get_result(db).await?;
 		let items = user
@@ -184,6 +198,7 @@ impl User {
 	) -> QueryResult<Self> {
 		use crate::schema::user::dsl::*;
 
+		trace!("Updating user: {} with {:?}", param_id, item);
 		db.transaction(|mut conn| {
 			Box::pin(async move {
 				diesel::update(user.filter(id.eq(param_id)))
@@ -200,6 +215,7 @@ impl User {
 	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::user::dsl::*;
 
+		trace!("Deleting from user table: {}", param_id);
 		diesel::delete(user.filter(id.eq(param_id)))
 			.execute(db)
 			.await
