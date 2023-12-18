@@ -31,8 +31,6 @@ pub struct Activity {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name = activity)]
 pub struct CreateActivity {
-	/// Field representing column `id`
-	pub id: i32,
 	/// Field representing column `token`
 	pub token: Option<String>,
 	/// Field representing column `name`

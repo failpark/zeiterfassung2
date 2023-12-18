@@ -59,8 +59,6 @@ pub struct Tracking {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name=tracking)]
 pub struct CreateTracking {
-	/// Field representing column `id`
-	pub id: i32,
 	/// Field representing column `client_id`
 	pub client_id: i32,
 	/// Field representing column `user_id`

@@ -38,8 +38,6 @@ pub struct TrackingToActivity {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name=tracking_to_activity)]
 pub struct CreateTrackingToActivity {
-	/// Field representing column `id`
-	pub id: i32,
 	/// Field representing column `tracking_id`
 	pub tracking_id: i32,
 	/// Field representing column `activity_id`

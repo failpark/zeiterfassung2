@@ -51,8 +51,6 @@ pub struct User {
 #[cfg_attr(test, derive(Dummy))]
 #[diesel(table_name=user)]
 pub struct CreateUser {
-	/// Field representing column `id`
-	pub id: i32,
 	/// Field representing column `username`
 	#[cfg_attr(test, dummy(faker = "Username()"))]
 	pub username: String,

@@ -28,8 +28,6 @@ pub struct Project {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name=project)]
 pub struct CreateProject {
-	/// Field representing column `id`
-	pub id: i32,
 	/// Field representing column `name`
 	pub name: String,
 }

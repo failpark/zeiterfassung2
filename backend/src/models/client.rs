@@ -29,8 +29,6 @@ pub struct Client {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name = client)]
 pub struct CreateClient {
-	/// Field representing column `id`
-	pub id: i32,
 	/// Field representing column `name`
 	pub name: String,
 }
