@@ -11,6 +11,8 @@ mod error;
 mod models;
 mod routes;
 mod schema;
+#[cfg(test)]
+mod tests;
 pub use db::DB;
 use rocket_cors::CorsOptions;
 

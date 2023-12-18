@@ -1,12 +1,19 @@
 use argon2::password_hash::{
+	rand_core::OsRng,
 	PasswordHash,
+	PasswordHasher,
 	PasswordVerifier,
 };
 use rocket_db_pools::diesel::{
 	insert_into,
 	prelude::*,
 };
-use tracing::debug;
+#[cfg(test)]
+use fake::{
+	Dummy,
+	faker::name::en::*,
+	faker::internet::en::*
+};
 
 use super::last_insert_id;
 use crate::schema::*;
@@ -41,21 +48,28 @@ pub struct User {
 
 /// Create Struct for a row in table `user` for [`User`]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
+#[cfg_attr(test, derive(Dummy))]
 #[diesel(table_name=user)]
 pub struct CreateUser {
 	/// Field representing column `id`
 	pub id: i32,
 	/// Field representing column `username`
+	#[cfg_attr(test, dummy(faker = "Username()"))]
 	pub username: String,
 	/// Field representing column `firstname`
+	#[cfg_attr(test, dummy(faker = "FirstName()"))]
 	pub firstname: String,
 	/// Field representing column `lastname`
+	#[cfg_attr(test, dummy(faker = "LastName()"))]
 	pub lastname: String,
 	/// Field representing column `email`
+	#[cfg_attr(test, dummy(faker = "SafeEmail()"))]
 	pub email: String,
 	/// Field representing column `hash`
+	#[cfg_attr(test, dummy(expr = "\"REPLACE ME\".into()"))]
 	pub hash: String,
 	/// Field representing column `sys_role`
+	#[cfg_attr(test, dummy(expr = "\"user\".into()"))]
 	pub sys_role: String,
 }
 
@@ -132,6 +146,16 @@ impl User {
 				Err(anyhow::Error::msg("Wrong credentials"))
 			}
 		}
+	}
+
+	fn hash_password(password: &[u8]) -> Result<String, argon2::password_hash::Error> {
+		let salt = argon2::password_hash::SaltString::generate(&mut OsRng);
+		trace!("Hashing password");
+		Ok(
+			argon2::Argon2::default()
+				.hash_password(password, &salt)?
+				.to_string(),
+		)
 	}
 
 	/// Insert a new row into `user` with a given [`CreateUser`]
@@ -219,5 +243,17 @@ impl User {
 		diesel::delete(user.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::CreateUser;
+	use fake::{Fake, Faker};
+
+	#[test]
+	fn create_update_delete() {
+		let user: CreateUser = Faker.fake();
+		println!("user: {:?}", user);
 	}
 }

@@ -7,5 +7,5 @@ fmt *args='--check':
 add *args:
 	cargo add {{ args }}
 
-dsync:
-	dsync -i backend/src/schema.rs -o backend/src/models --connection-type="rocket_db_pools::Connection<crate::DB>" --async -g created_at -g updated_at
+fix_ids:
+	sed -i 's/\sid\ ->\ Integer\,/\tid\ ->\ Nullable\<Integer\>,/g' backend/src/schema.rs
