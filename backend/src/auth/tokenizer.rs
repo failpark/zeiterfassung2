@@ -2,7 +2,11 @@
 use jwt_simple::prelude::*;
 use tracing::error;
 
-use crate::models::user::User;
+use crate::{
+	Error,
+	Result,
+	User,
+};
 
 /// This struct is a Singelton that is initialized on startup
 /// ```rust
@@ -40,7 +44,7 @@ impl Tokenizer {
 	/// Returns `Err` with own JWTSign Error if an error occured while signing
 	/// `Error::JWTSign` is only thrown here. We don't have to care what exactly
 	/// is thrown here since JWTSign points here
-	pub fn generate(&self, user: User) -> anyhow::Result<String> {
+	pub fn generate(&self, user: User) -> Result<String> {
 		trace!("Generating Token for User: {:?}", user.id);
 		let claims = Claims::with_custom_claims(user, self.exp);
 
@@ -48,7 +52,7 @@ impl Tokenizer {
 			Ok(signed_token) => Ok(signed_token),
 			Err(err) => {
 				error!("Error while signing Token: {:?}", err);
-				Err(err)
+				Err(Error::JWTSign(err))
 			}
 		}
 	}
@@ -56,7 +60,7 @@ impl Tokenizer {
 	/// Verify the Token
 	/// Returns `Ok` if the Token could be verified
 	/// `Err` if Token is invalid
-	pub fn verify(&self, token: &str) -> anyhow::Result<User> {
+	pub fn verify(&self, token: &str) -> Result<User> {
 		let verify = self.pub_key.verify_token::<User>(token, None);
 		match verify {
 			Ok(verify) => {
@@ -65,7 +69,7 @@ impl Tokenizer {
 			}
 			Err(err) => {
 				error!("Error while verifying Token: {:?}", err);
-				Err(err)
+				Err(Error::JWTVerify(err))
 			}
 		}
 	}

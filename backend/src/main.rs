@@ -8,16 +8,31 @@ use rocket_db_pools::Database;
 mod auth;
 mod db;
 mod error;
-mod models;
+mod guard;
 mod routes;
 mod schema;
 #[cfg(test)]
 mod tests;
-pub use db::DB;
+pub use db::{
+	user::User,
+	DB,
+};
+pub use error::{
+	Error,
+	Result,
+};
 use rocket_cors::CorsOptions;
+// use tracing_subscriber::FmtSubscriber;
+// use tracing::subscriber::set_global_default;
+// use tracing::Level;
 
 #[launch]
 fn rocket() -> _ {
+	// let subscriber = FmtSubscriber::builder()
+	// .with_max_level(Level::TRACE)
+	// .finish();
+	// set_global_default(subscriber).expect("setting default subscriber failed");
+
 	let allowed_origins = rocket_cors::AllowedOrigins::some_exact(&["http://localhost:5173"]);
 	Rocket::build()
 		.attach(
@@ -30,6 +45,7 @@ fn rocket() -> _ {
 		)
 		.attach(DB::init())
 		.attach(AdHoc::on_ignite("Run Migrations", db::run_migrations))
+		.attach(routes::login::mount())
 		.manage(auth::Tokenizer::new(std::time::Duration::new(
 			5 * 24 * 60 * 60,
 			0,

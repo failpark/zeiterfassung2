@@ -17,6 +17,8 @@ use serde::ser::{
 };
 use thiserror::Error;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Error, Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum Error {
@@ -32,9 +34,11 @@ pub enum Error {
 	RocketCors(#[from] rocket_cors::Error),
 	#[error("Launch Failed: {0}")]
 	Rocket(#[from] rocket::Error),
-	#[error("Could not sign token")]
-	JWTSign,
-	#[error("Invalid access token: {0}")]
+	#[error("Could not sign token: {0}")]
+	JWTSign(#[source] jwt_simple::Error),
+	#[error("Could not verify token: {0}")]
+	JWTVerify(#[source] jwt_simple::Error),
+	#[error("General JWT Error: {0}")]
 	JWT(#[from] jwt_simple::Error),
 	#[error("Not found")]
 	NotFound,
@@ -71,7 +75,7 @@ impl Error {
 }
 
 impl Serialize for Error {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
 	where
 		S: Serializer,
 	{

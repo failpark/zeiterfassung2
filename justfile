@@ -7,5 +7,5 @@ fmt *args='--check':
 add *args:
 	cargo add {{ args }}
 
-fix_ids:
-	sed -i 's/\sid\ ->\ Integer\,/\tid\ ->\ Nullable\<Integer\>,/g' backend/src/schema.rs
+check *args:
+	cargo clippy {{ args }}

@@ -4,15 +4,15 @@ use argon2::password_hash::{
 	PasswordHasher,
 	PasswordVerifier,
 };
+#[cfg(test)]
+use fake::{
+	faker::internet::en::*,
+	faker::name::en::*,
+	Dummy,
+};
 use rocket_db_pools::diesel::{
 	insert_into,
 	prelude::*,
-};
-#[cfg(test)]
-use fake::{
-	Dummy,
-	faker::name::en::*,
-	faker::internet::en::*
 };
 
 use super::last_insert_id;
@@ -241,17 +241,5 @@ impl User {
 		diesel::delete(user.filter(id.eq(param_id)))
 			.execute(db)
 			.await
-	}
-}
-
-#[cfg(test)]
-mod test {
-	use super::CreateUser;
-	use fake::{Fake, Faker};
-
-	#[test]
-	fn create_update_delete() {
-		let user: CreateUser = Faker.fake();
-		println!("user: {:?}", user);
 	}
 }
