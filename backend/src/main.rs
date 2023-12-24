@@ -12,7 +12,7 @@ mod guard;
 mod routes;
 mod schema;
 #[cfg(test)]
-mod tests;
+mod test;
 pub use db::{
 	user::User,
 	DB,
@@ -22,6 +22,7 @@ pub use error::{
 	Result,
 };
 use rocket_cors::CorsOptions;
+mod catchers;
 // use tracing_subscriber::FmtSubscriber;
 // use tracing::subscriber::set_global_default;
 // use tracing::Level;
@@ -46,8 +47,10 @@ fn rocket() -> _ {
 		.attach(DB::init())
 		.attach(AdHoc::on_ignite("Run Migrations", db::run_migrations))
 		.attach(routes::login::mount())
+		.attach(routes::user::mount())
 		.manage(auth::Tokenizer::new(std::time::Duration::new(
 			5 * 24 * 60 * 60,
 			0,
 		)))
+		.register("/", catchers![catchers::default_catcher])
 }

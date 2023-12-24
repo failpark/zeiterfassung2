@@ -1,7 +1,5 @@
 use argon2::password_hash::{
-	rand_core::OsRng,
 	PasswordHash,
-	PasswordHasher,
 	PasswordVerifier,
 };
 #[cfg(test)]
@@ -16,7 +14,11 @@ use rocket_db_pools::diesel::{
 };
 
 use super::last_insert_id;
-use crate::schema::*;
+use crate::{
+	schema::*,
+	Error,
+	Result,
+};
 
 pub type ConnectionType = rocket_db_pools::Connection<crate::DB>;
 
@@ -116,7 +118,7 @@ impl User {
 		db: &mut ConnectionType,
 		email: &str,
 		password: &str,
-	) -> anyhow::Result<Self> {
+	) -> Result<Self> {
 		use crate::schema::user::dsl;
 
 		trace!("Checking credentials for {}", email);
@@ -126,12 +128,12 @@ impl User {
 			.await?;
 		debug!("Found user: {:?}", rec.username);
 		let hash = PasswordHash::new(&rec.hash);
-		if hash.is_err() {
+		if let Err(err) = hash {
 			error!(
 				"Hash is invalid.\nuser: {}\nhash: {}\npassword: {}",
 				rec.username, rec.hash, password
 			);
-			return Err(anyhow::Error::msg("Hash is invalid"));
+			return Err(Error::Argon2PasswordHash(err));
 		}
 		let hash = hash.unwrap();
 		match argon2::Argon2::default().verify_password(password.as_bytes(), &hash) {
@@ -141,19 +143,9 @@ impl User {
 			}
 			Err(_) => {
 				trace!("Wrong credentials for {}", email);
-				Err(anyhow::Error::msg("Wrong credentials"))
+				Err(Error::WrongCredentials)
 			}
 		}
-	}
-
-	fn hash_password(password: &[u8]) -> Result<String, argon2::password_hash::Error> {
-		let salt = argon2::password_hash::SaltString::generate(&mut OsRng);
-		trace!("Hashing password");
-		Ok(
-			argon2::Argon2::default()
-				.hash_password(password, &salt)?
-				.to_string(),
-		)
 	}
 
 	/// Insert a new row into `user` with a given [`CreateUser`]

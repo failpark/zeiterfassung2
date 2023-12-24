@@ -1,4 +1,7 @@
-// use crate::Error;
+use argon2::password_hash::{
+	rand_core::OsRng,
+	PasswordHasher,
+};
 use jwt_simple::prelude::*;
 use tracing::error;
 
@@ -72,5 +75,17 @@ impl Tokenizer {
 				Err(Error::JWTVerify(err))
 			}
 		}
+	}
+
+	pub fn hash_password(
+		password: &[u8],
+	) -> std::result::Result<String, argon2::password_hash::Error> {
+		let salt = argon2::password_hash::SaltString::generate(&mut OsRng);
+		trace!("Hashing password");
+		Ok(
+			argon2::Argon2::default()
+				.hash_password(password, &salt)?
+				.to_string(),
+		)
 	}
 }

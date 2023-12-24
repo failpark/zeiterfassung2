@@ -1,10 +1,7 @@
 use rocket::{
 	async_trait,
 	http::Status,
-	outcome::{
-		try_outcome,
-		IntoOutcome,
-	},
+	outcome::try_outcome,
 	request::{
 		FromRequest,
 		Outcome,

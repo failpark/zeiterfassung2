@@ -25,4 +25,5 @@ typeshare = "1.0.1"
 [dev-dependencies]
 fake = { version = "2.9.1", features = ["derive"]}
 pretty_assertions = "1.4.0"
+rand = "0.8.5"
 test-case = "3.3.1"

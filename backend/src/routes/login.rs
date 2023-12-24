@@ -1,6 +1,14 @@
 use rocket::{
 	fairing::AdHoc,
-	serde::json::Json,
+	request::Request,
+	response::{
+		content,
+		Responder as ResponderImpl,
+	},
+	serde::json::{
+		to_string,
+		Json,
+	},
 	State,
 };
 use rocket_db_pools::Connection;
@@ -8,34 +16,50 @@ use serde::{
 	Deserialize,
 	Serialize,
 };
-use tracing::debug;
 
 use crate::{
 	auth::Tokenizer,
-	db::user::User,
-	error::Error,
+	Error,
+	User,
 	DB,
 };
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
 pub struct LoginResponder {
-	inner: String,
+	inner: Token,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Token {
+	pub token: String,
+}
+
+impl<'r> ResponderImpl<'r, 'static> for Token {
+	fn respond_to(self, req: &'r Request<'_>) -> rocket::response::Result<'static> {
+		content::RawJson(to_string(&self).expect("Could not serialize Token")).respond_to(req)
+	}
 }
 
 impl LoginResponder {
 	pub fn new(inner: String) -> Self {
 		trace!("LoginResponder::new({:?})", inner);
 		Self {
-			inner: format!("{{\"token\": \"{inner}\"}}"),
+			inner: Token { token: inner },
 		}
 	}
 }
 
 #[derive(Deserialize, Serialize)]
-struct Login<'r> {
+pub struct Login<'r> {
 	email: &'r str,
 	password: &'r str,
+}
+
+impl<'a> Login<'a> {
+	pub fn new(email: &'a str, password: &'a str) -> Login<'a> {
+		Self { email, password }
+	}
 }
 
 #[post("/", data = "<login>")]
@@ -49,36 +73,54 @@ async fn post_login<'r>(
 	)?))
 }
 
-#[get("/hello")]
-async fn hello() -> &'static str {
-	trace!("Hello, world!");
-	debug!("Hello, world!");
-	"Hello, world!"
-}
-
 #[cfg(test)]
 mod test {
+	use pretty_assertions::assert_eq;
 	use rocket::{
 		http::Status,
 		local::blocking::Client,
+		serde::json::to_string,
 	};
 
-	use crate::rocket;
+	use super::Token;
+	use crate::{
+		auth::Tokenizer,
+		error::ErrorJson,
+		rocket,
+		test::create_admin,
+	};
 
 	#[test]
-	fn test_login() {
+	fn login() {
 		let client = Client::tracked(rocket()).unwrap();
+		let [admin_email, admin_password] = create_admin(&client, None).unwrap();
 		let login = super::Login {
-			email: "test@example.com",
-			password: "admin",
+			email: admin_email.as_str(),
+			password: admin_password.as_str(),
 		};
-		let response = client.post("/login").json(&login).dispatch();
-		println!("{:?}", response);
+		let response = client
+			.post("/login")
+			.body(format!("email={}&password=Admin_01!", login.email))
+			.dispatch();
+		assert_eq!(response.status(), Status::BadRequest);
+		assert_eq!(
+			response.into_string(),
+			Some(to_string(&ErrorJson::new(400, "Bad Request")).expect("Could not serialize ErrorJson"))
+		);
+
+		let response = client
+			.post("/login")
+			.body(to_string(&login).expect("Could not serialize Login"))
+			.dispatch();
+		assert_eq!(response.status(), Status::Ok);
+		let tokenizer = client.rocket().state::<Tokenizer>().unwrap();
+		let token = response.into_json::<Token>().unwrap().token;
+		assert!(tokenizer.verify(&token).is_ok());
 	}
 }
 
 pub fn mount() -> AdHoc {
 	AdHoc::on_ignite("Mount Login Routes", |rocket| async {
-		rocket.mount("/login", routes![post_login, hello])
+		rocket.mount("/login", routes![post_login])
 	})
 }

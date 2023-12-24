@@ -10,10 +10,13 @@ use rocket::{
 	},
 	serde::json::Json,
 };
-use serde::ser::{
+use serde::{
+	ser::{
+		SerializeStruct,
+		Serializer,
+	},
+	Deserialize,
 	Serialize,
-	SerializeStruct,
-	Serializer,
 };
 use thiserror::Error;
 
@@ -71,6 +74,18 @@ impl Error {
 			Self::BadRequest(_) | Self::JWT(_) => Status::BadRequest,
 			_ => Status::InternalServerError,
 		}
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ErrorJson<'a> {
+	error: &'a str,
+	code: u16,
+}
+
+impl<'a> ErrorJson<'a> {
+	pub fn new(code: u16, error: &'a str) -> Self {
+		Self { error, code }
 	}
 }
 
