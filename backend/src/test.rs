@@ -1,3 +1,4 @@
+use diesel::prelude::*;
 use fake::{
 	Fake,
 	Faker,
@@ -28,11 +29,6 @@ use crate::{
 // static ADMIN_USER_IDS: OnceLock<Vec<i32>> = OnceLock::new();
 
 pub fn create_user(client: &Client, item: CreateUser) -> anyhow::Result<()> {
-	use diesel::{
-		insert_into,
-		prelude::*,
-	};
-
 	use crate::schema::user::dsl::*;
 
 	let db_url: String = client
@@ -43,10 +39,34 @@ pub fn create_user(client: &Client, item: CreateUser) -> anyhow::Result<()> {
 
 	let mut conn = diesel::MysqlConnection::establish(&db_url).expect("No database");
 
-	insert_into(user)
+	diesel::insert_into(user)
 		.values(item)
 		.execute(&mut conn)
 		.expect("Inserting into user table failed");
+	Ok(())
+}
+
+pub fn cleanup_admin_user(client: &Client, admin_email: String) {
+	let cleanup = delete_user(client, admin_email.clone());
+	if let Err(e) = cleanup {
+		panic!("Could not cleanup for user: {admin_email}\n{e:?}");
+	}
+}
+
+pub fn delete_user(client: &Client, param_email: String) -> anyhow::Result<()> {
+	use crate::schema::user::dsl::*;
+
+	let db_url: String = client
+		.rocket()
+		.figment()
+		.extract_inner("databases.zeiterfassung2.url")
+		.unwrap();
+
+	let mut conn = diesel::MysqlConnection::establish(&db_url).expect("No database");
+
+	diesel::delete(user.filter(email.eq(param_email)))
+		.execute(&mut conn)
+		.expect("Deleting from user table failed");
 	Ok(())
 }
 
@@ -71,12 +91,18 @@ pub fn generate_user() -> CreateUser {
 	user
 }
 
-pub fn add_auth_header(mut request: LocalRequest, token: String) -> LocalRequest {
-	request.add_header(Header::new("Authorization", format!("Bearer {}", token)));
-	request
+pub trait AuthHeader {
+	fn add_auth_header(self, token: String) -> Self;
 }
 
-pub fn get_admin_token(client: &Client, password: Option<String>) -> String {
+impl AuthHeader for LocalRequest<'_> {
+	fn add_auth_header(mut self, token: String) -> Self {
+		self.add_header(Header::new("Authorization", format!("Bearer {}", token)));
+		self
+	}
+}
+
+pub fn get_admin_token(client: &Client, password: Option<String>) -> [String; 2] {
 	let [admin_email, admin_password] = create_admin(client, password).unwrap();
 	let token = client
 		.post("/login")
@@ -87,5 +113,5 @@ pub fn get_admin_token(client: &Client, password: Option<String>) -> String {
 		.dispatch()
 		.into_json::<Token>()
 		.unwrap();
-	token.token
+	[token.token, admin_email]
 }

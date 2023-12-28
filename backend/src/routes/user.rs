@@ -75,9 +75,10 @@ mod test {
 		error::ErrorJson,
 		rocket,
 		test::{
-			add_auth_header,
+			cleanup_admin_user,
 			generate_user,
 			get_admin_token,
+			AuthHeader,
 		},
 	};
 
@@ -93,11 +94,12 @@ mod test {
 			.dispatch();
 		assert_eq!(response.status(), Status::Unauthorized);
 
-		let token = get_admin_token(&client, None);
+		let [token, admin_email] = get_admin_token(&client, None);
 		// Create new user
 		let response = create_user(&client, user.clone(), token.clone());
 		let response = response.into_json::<User>().unwrap();
 		assert_eq!(response.username, user.username);
+		let user_id = response.id;
 
 		// Check duplicate user insert
 		let response = create_user(&client, user.clone(), token.clone());
@@ -109,12 +111,23 @@ mod test {
 					.expect("Could not serialize ErrorJson")
 			)
 		);
+
+		// test deleting user
+		let response = client
+			.delete("/user")
+			.body(format!("{}", user_id))
+			.add_auth_header(token)
+			.dispatch();
+		assert_eq!(response.status(), Status::Ok);
+
+		cleanup_admin_user(&client, admin_email);
 	}
 
 	fn create_user(client: &Client, item: CreateUser, token: String) -> LocalResponse {
-		let request = client
+		client
 			.post("/user")
-			.body(to_string(&item).expect("Could not serialize CreateUser"));
-		add_auth_header(request, token).dispatch()
+			.body(to_string(&item).expect("Could not serialize CreateUser"))
+			.add_auth_header(token)
+			.dispatch()
 	}
 }

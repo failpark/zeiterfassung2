@@ -56,6 +56,8 @@ pub struct Login<'r> {
 	password: &'r str,
 }
 
+/// We do not need to construct Login manually in production, so we hide the constructor behind a cfg(test)
+#[cfg(test)]
 impl<'a> Login<'a> {
 	pub fn new(email: &'a str, password: &'a str) -> Login<'a> {
 		Self { email, password }
@@ -87,7 +89,10 @@ mod test {
 		auth::Tokenizer,
 		error::ErrorJson,
 		rocket,
-		test::create_admin,
+		test::{
+			cleanup_admin_user,
+			create_admin,
+		},
 	};
 
 	#[test]
@@ -116,6 +121,7 @@ mod test {
 		let tokenizer = client.rocket().state::<Tokenizer>().unwrap();
 		let token = response.into_json::<Token>().unwrap().token;
 		assert!(tokenizer.verify(&token).is_ok());
+		cleanup_admin_user(&client, admin_email);
 	}
 }
 
