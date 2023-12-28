@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use diesel::prelude::*;
 use fake::{
 	Fake,
@@ -15,6 +17,7 @@ use rocket::{
 	},
 	serde::json::to_string,
 };
+use diesel::r2d2::{Pool, ConnectionManager, PooledConnection};
 
 use crate::{
 	auth::Tokenizer,
@@ -24,20 +27,32 @@ use crate::{
 		Token,
 	},
 };
-// use std::sync::OnceLock;
 
-// static ADMIN_USER_IDS: OnceLock<Vec<i32>> = OnceLock::new();
+pub fn db_url(client: &Client) -> &'static str {
+	static DB_URL: OnceLock<String> = OnceLock::new();
+	DB_URL.get_or_init(|| {
+		client
+			.rocket()
+			.figment()
+			.extract_inner("databases.zeiterfassung2.url")
+			.unwrap()
+	})
+}
+
+fn get_sync_connection(client: &Client) -> PooledConnection<ConnectionManager<MysqlConnection>> {
+	static DB_POOL: OnceLock<Pool<ConnectionManager<MysqlConnection>>> = OnceLock::new();
+	DB_POOL.get_or_init(|| {
+		let db_url = db_url(client);
+		let manager = ConnectionManager::<MysqlConnection>::new(db_url);
+		Pool::builder().build(manager).expect("Could not build connection pool")
+	});
+	DB_POOL.get().unwrap().get().unwrap()
+}
 
 pub fn create_user(client: &Client, item: CreateUser) -> anyhow::Result<()> {
 	use crate::schema::user::dsl::*;
 
-	let db_url: String = client
-		.rocket()
-		.figment()
-		.extract_inner("databases.zeiterfassung2.url")
-		.unwrap();
-
-	let mut conn = diesel::MysqlConnection::establish(&db_url).expect("No database");
+	let mut conn = get_sync_connection(client);
 
 	diesel::insert_into(user)
 		.values(item)
@@ -55,14 +70,7 @@ pub fn cleanup_admin_user(client: &Client, admin_email: String) {
 
 pub fn delete_user(client: &Client, param_email: String) -> anyhow::Result<()> {
 	use crate::schema::user::dsl::*;
-
-	let db_url: String = client
-		.rocket()
-		.figment()
-		.extract_inner("databases.zeiterfassung2.url")
-		.unwrap();
-
-	let mut conn = diesel::MysqlConnection::establish(&db_url).expect("No database");
+	let mut conn = get_sync_connection(client);
 
 	diesel::delete(user.filter(email.eq(param_email)))
 		.execute(&mut conn)
