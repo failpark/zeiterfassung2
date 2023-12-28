@@ -66,7 +66,7 @@ pub struct CreateUser {
 	#[cfg_attr(test, dummy(faker = "SafeEmail()"))]
 	pub email: String,
 	/// Field representing column `hash`
-	#[cfg_attr(test, dummy(expr = "\"REPLACE ME\".into()"))]
+	#[cfg_attr(test, dummy(expr = "\"User_01!\".into()"))]
 	pub hash: String,
 	/// Field representing column `sys_role`
 	#[cfg_attr(test, dummy(expr = "\"user\".into()"))]

@@ -5,6 +5,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 
 use crate::{
+	auth::Tokenizer,
 	db::user::{
 		CreateUser,
 		User,
@@ -17,11 +18,12 @@ use crate::{
 async fn create(
 	user: User,
 	mut db: Connection<DB>,
-	create_user: Json<CreateUser>,
+	mut create_user: Json<CreateUser>,
 ) -> Result<Json<User>, Error> {
 	if user.sys_role != "admin" {
 		return Err(Error::ForbiddenAccess);
 	}
+	create_user.hash = Tokenizer::hash_password(create_user.hash.as_bytes())?;
 	let user = User::create(&mut db, &create_user).await;
 	if let Ok(user) = user {
 		Ok(Json(user))

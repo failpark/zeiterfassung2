@@ -102,9 +102,7 @@ pub fn create_admin(client: &Client, password: Option<String>) -> anyhow::Result
 
 pub fn generate_user() -> CreateUser {
 	let mut rng = StdRng::from_entropy();
-	let mut user: CreateUser = Faker.fake_with_rng(&mut rng);
-	user.hash = Tokenizer::hash_password("User_01!".as_bytes()).unwrap();
-	user
+	Faker.fake_with_rng(&mut rng)
 }
 
 pub trait AuthHeader {
