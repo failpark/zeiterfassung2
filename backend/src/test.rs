@@ -1,6 +1,13 @@
 use std::sync::OnceLock;
 
-use diesel::prelude::*;
+use diesel::{
+	prelude::*,
+	r2d2::{
+		ConnectionManager,
+		Pool,
+		PooledConnection,
+	},
+};
 use fake::{
 	Fake,
 	Faker,
@@ -17,7 +24,6 @@ use rocket::{
 	},
 	serde::json::to_string,
 };
-use diesel::r2d2::{Pool, ConnectionManager, PooledConnection};
 
 use crate::{
 	auth::Tokenizer,
@@ -44,7 +50,9 @@ fn get_sync_connection(client: &Client) -> PooledConnection<ConnectionManager<My
 	DB_POOL.get_or_init(|| {
 		let db_url = db_url(client);
 		let manager = ConnectionManager::<MysqlConnection>::new(db_url);
-		Pool::builder().build(manager).expect("Could not build connection pool")
+		Pool::builder()
+			.build(manager)
+			.expect("Could not build connection pool")
 	});
 	DB_POOL.get().unwrap().get().unwrap()
 }
