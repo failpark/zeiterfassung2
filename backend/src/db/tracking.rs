@@ -1,6 +1,9 @@
-use rocket_db_pools::diesel::{
-	insert_into,
-	prelude::*,
+use rocket_db_pools::{
+	diesel::{
+		insert_into,
+		prelude::*,
+	},
+	Connection,
 };
 
 use super::{
@@ -8,10 +11,12 @@ use super::{
 	last_insert_id,
 	project::Project,
 	user::User,
+	PaginationResult,
 };
-use crate::schema::*;
-
-pub type ConnectionType = rocket_db_pools::Connection<crate::DB>;
+use crate::{
+	schema::*,
+	DB,
+};
 
 /// Struct representing a row in table `tracking`
 #[derive(
@@ -111,24 +116,9 @@ pub struct UpdateTracking {
 	pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-/// Result of a `.paginate` function
-#[derive(Debug, serde::Serialize)]
-pub struct PaginationResult<T> {
-	/// Resulting items that are from the current page
-	pub items: Vec<T>,
-	/// The count of total items there are
-	pub total_items: i64,
-	/// Current page, 0-based index
-	pub page: i64,
-	/// Size of a page
-	pub page_size: i64,
-	/// Number of total possible pages, given the `page_size` and `total_items`
-	pub num_pages: i64,
-}
-
 impl Tracking {
 	/// Insert a new row into `tracking` with a given [`CreateTracking`]
-	pub async fn create(db: &mut ConnectionType, item: &CreateTracking) -> QueryResult<Self> {
+	pub async fn create(db: &mut Connection<DB>, item: &CreateTracking) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Inserting into tracking table: {:?}", item);
@@ -149,7 +139,7 @@ impl Tracking {
 	}
 
 	/// Get a row from `tracking`, identified by the primary key
-	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
+	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Reading from tracking table: {}", param_id);
@@ -158,7 +148,7 @@ impl Tracking {
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
 	pub async fn paginate(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -189,7 +179,7 @@ impl Tracking {
 
 	/// Update a row in `tracking`, identified by the primary key with [`UpdateTracking`]
 	pub async fn update(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		param_id: i32,
 		item: &UpdateTracking,
 	) -> QueryResult<Self> {
@@ -212,7 +202,7 @@ impl Tracking {
 	}
 
 	/// Delete a row in `tracking`, identified by the primary key
-	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
+	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Deleting from tracking table: {}", param_id);

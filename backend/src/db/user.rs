@@ -8,24 +8,31 @@ use fake::{
 	faker::name::en::*,
 	Dummy,
 };
-use rocket_db_pools::diesel::{
-	insert_into,
-	prelude::*,
+use rocket_db_pools::{
+	diesel::{
+		insert_into,
+		prelude::*,
+	},
+	Connection,
+};
+use serde::{
+	Deserialize,
+	Serialize,
 };
 
-use super::last_insert_id;
+use super::{
+	last_insert_id,
+	PaginationResult,
+};
 use crate::{
 	schema::*,
 	Error,
 	Result,
+	DB,
 };
 
-pub type ConnectionType = rocket_db_pools::Connection<crate::DB>;
-
 /// Struct representing a row in table `user`
-#[derive(
-	Debug, Clone, serde::Serialize, serde::Deserialize, Queryable, Selectable, QueryableByName,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, QueryableByName)]
 #[diesel(table_name=user, primary_key(id))]
 pub struct User {
 	/// Field representing column `id`
@@ -95,27 +102,12 @@ pub struct UpdateUser {
 	pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-/// Result of a `.paginate` function
-#[derive(Debug, serde::Serialize)]
-pub struct PaginationResult<T> {
-	/// Resulting items that are from the current page
-	pub items: Vec<T>,
-	/// The count of total items there are
-	pub total_items: i64,
-	/// Current page, 0-based index
-	pub page: i64,
-	/// Size of a page
-	pub page_size: i64,
-	/// Number of total possible pages, given the `page_size` and `total_items`
-	pub num_pages: i64,
-}
-
 impl User {
 	/// Gets the Hash from the database where email matches,
 	/// hashes the password and compares newly generated hash
 	/// with hash from the database
 	pub async fn check_credentials(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		email: &str,
 		password: &str,
 	) -> Result<Self> {
@@ -149,7 +141,7 @@ impl User {
 	}
 
 	/// Insert a new row into `user` with a given [`CreateUser`]
-	pub async fn create(db: &mut ConnectionType, item: &CreateUser) -> QueryResult<Self> {
+	pub async fn create(db: &mut Connection<DB>, item: &CreateUser) -> QueryResult<Self> {
 		use crate::schema::user::dsl::*;
 
 		trace!("Inserting into user table: {:?}", item);
@@ -167,7 +159,7 @@ impl User {
 	}
 
 	/// Get a row from `user`, identified by the primary key
-	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
+	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::user::dsl::*;
 		trace!("Reading from user table: {}", param_id);
 		user.filter(id.eq(param_id)).first::<Self>(db).await
@@ -175,7 +167,7 @@ impl User {
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
 	pub async fn paginate(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -206,7 +198,7 @@ impl User {
 
 	/// Update a row in `user`, identified by the primary key with [`UpdateUser`]
 	pub async fn update(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		param_id: i32,
 		item: &UpdateUser,
 	) -> QueryResult<Self> {
@@ -226,7 +218,7 @@ impl User {
 	}
 
 	/// Delete a row in `user`, identified by the primary key
-	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
+	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::user::dsl::*;
 
 		trace!("Deleting from user table: {}", param_id);

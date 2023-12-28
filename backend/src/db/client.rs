@@ -1,13 +1,20 @@
-use rocket_db_pools::diesel::{
-	insert_into,
-	prelude::*,
-	RunQueryDsl,
+use rocket_db_pools::{
+	diesel::{
+		insert_into,
+		prelude::*,
+		RunQueryDsl,
+	},
+	Connection,
 };
 
-use super::last_insert_id;
-use crate::schema::*;
-
-pub type ConnectionType = rocket_db_pools::Connection<crate::DB>;
+use super::{
+	last_insert_id,
+	PaginationResult,
+};
+use crate::{
+	schema::*,
+	DB,
+};
 
 /// Struct representing a row in table `client`
 #[derive(
@@ -45,24 +52,9 @@ pub struct UpdateClient {
 	pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-/// Result of a `.paginate` function
-#[derive(Debug, serde::Serialize)]
-pub struct PaginationResult<T> {
-	/// Resulting items that are from the current page
-	pub items: Vec<T>,
-	/// The count of total items there are
-	pub total_items: i64,
-	/// Current page, 0-based index
-	pub page: i64,
-	/// Size of a page
-	pub page_size: i64,
-	/// Number of total possible pages, given the `page_size` and `total_items`
-	pub num_pages: i64,
-}
-
 impl Client {
 	/// Insert a new row into `client` with a given [`CreateClient`]
-	pub async fn create(db: &mut ConnectionType, item: &CreateClient) -> QueryResult<Self> {
+	pub async fn create(db: &mut Connection<DB>, item: &CreateClient) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Inserting into client table: {:?}", item);
@@ -80,7 +72,7 @@ impl Client {
 	}
 
 	/// Get a row from `client`, identified by the primary key
-	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
+	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Reading from client table: {:?}", param_id);
@@ -89,7 +81,7 @@ impl Client {
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
 	pub async fn paginate(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -120,7 +112,7 @@ impl Client {
 
 	/// Update a row in `client`, identified by the primary key with [`UpdateClient`]
 	pub async fn update(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		param_id: i32,
 		item: &UpdateClient,
 	) -> QueryResult<Self> {
@@ -145,7 +137,7 @@ impl Client {
 	}
 
 	/// Delete a row in `client`, identified by the primary key
-	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
+	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Deleting from client table: {}", param_id);

@@ -1,13 +1,20 @@
-use rocket_db_pools::diesel::{
-	insert_into,
-	prelude::*,
-	RunQueryDsl,
+use rocket_db_pools::{
+	diesel::{
+		insert_into,
+		prelude::*,
+		RunQueryDsl,
+	},
+	Connection,
 };
 
-use super::last_insert_id;
-use crate::schema::*;
-
-pub type ConnectionType = rocket_db_pools::Connection<crate::DB>;
+use super::{
+	last_insert_id,
+	PaginationResult,
+};
+use crate::{
+	schema::*,
+	DB,
+};
 
 /// Struct representing a row in table `activity`
 #[derive(
@@ -51,24 +58,9 @@ pub struct UpdateActivity {
 	pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-/// Result of a `.paginate` function
-#[derive(Debug, serde::Serialize)]
-pub struct PaginationResult<T> {
-	/// Resulting items that are from the current page
-	pub items: Vec<T>,
-	/// The count of total items there are
-	pub total_items: i64,
-	/// Current page, 0-based index
-	pub page: i64,
-	/// Size of a page
-	pub page_size: i64,
-	/// Number of total possible pages, given the `page_size` and `total_items`
-	pub num_pages: i64,
-}
-
 impl Activity {
 	/// Insert a new row into `activity` with a given [`CreateActivity`]
-	pub async fn create(db: &mut ConnectionType, item: &CreateActivity) -> QueryResult<Self> {
+	pub async fn create(db: &mut Connection<DB>, item: &CreateActivity) -> QueryResult<Self> {
 		use crate::schema::activity::dsl::*;
 
 		trace!("Inserting into activity table: {:?}", item);
@@ -89,7 +81,7 @@ impl Activity {
 	}
 
 	/// Get a row from `activity`, identified by the primary key
-	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
+	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::activity::dsl::*;
 
 		trace!("Reading from activity table: {}", param_id);
@@ -98,7 +90,7 @@ impl Activity {
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
 	pub async fn paginate(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -129,7 +121,7 @@ impl Activity {
 
 	/// Update a row in `activity`, identified by the primary key with [`UpdateActivity`]
 	pub async fn update(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		param_id: i32,
 		item: &UpdateActivity,
 	) -> QueryResult<Self> {
@@ -152,7 +144,7 @@ impl Activity {
 	}
 
 	/// Delete a row in `activity`, identified by the primary key
-	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
+	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::activity::dsl::*;
 
 		trace!("Deleting from activity table: {}", param_id);

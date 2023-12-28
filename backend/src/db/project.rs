@@ -1,12 +1,19 @@
-use rocket_db_pools::diesel::{
-	insert_into,
-	prelude::*,
+use rocket_db_pools::{
+	diesel::{
+		insert_into,
+		prelude::*,
+	},
+	Connection,
 };
 
-use super::last_insert_id;
-use crate::schema::*;
-
-pub type ConnectionType = rocket_db_pools::Connection<crate::DB>;
+use super::{
+	last_insert_id,
+	PaginationResult,
+};
+use crate::{
+	schema::*,
+	DB,
+};
 
 /// Struct representing a row in table `project`
 #[derive(
@@ -44,24 +51,9 @@ pub struct UpdateProject {
 	pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-/// Result of a `.paginate` function
-#[derive(Debug, serde::Serialize)]
-pub struct PaginationResult<T> {
-	/// Resulting items that are from the current page
-	pub items: Vec<T>,
-	/// The count of total items there are
-	pub total_items: i64,
-	/// Current page, 0-based index
-	pub page: i64,
-	/// Size of a page
-	pub page_size: i64,
-	/// Number of total possible pages, given the `page_size` and `total_items`
-	pub num_pages: i64,
-}
-
 impl Project {
 	/// Insert a new row into `project` with a given [`CreateProject`]
-	pub async fn create(db: &mut ConnectionType, item: &CreateProject) -> QueryResult<Self> {
+	pub async fn create(db: &mut Connection<DB>, item: &CreateProject) -> QueryResult<Self> {
 		use crate::schema::project::dsl::*;
 
 		trace!("Inserting into project table: {:?}", item);
@@ -79,7 +71,7 @@ impl Project {
 	}
 
 	/// Get a row from `project`, identified by the primary key
-	pub async fn read(db: &mut ConnectionType, param_id: i32) -> QueryResult<Self> {
+	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::project::dsl::*;
 
 		trace!("Reading from project table: {:?}", param_id);
@@ -88,7 +80,7 @@ impl Project {
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
 	pub async fn paginate(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -119,7 +111,7 @@ impl Project {
 
 	/// Update a row in `project`, identified by the primary key with [`UpdateProject`]
 	pub async fn update(
-		db: &mut ConnectionType,
+		db: &mut Connection<DB>,
 		param_id: i32,
 		item: &UpdateProject,
 	) -> QueryResult<Self> {
@@ -142,7 +134,7 @@ impl Project {
 	}
 
 	/// Delete a row in `project`, identified by the primary key
-	pub async fn delete(db: &mut ConnectionType, param_id: i32) -> QueryResult<usize> {
+	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::project::dsl::*;
 
 		trace!("Deleting from project table: {:?}", param_id);
