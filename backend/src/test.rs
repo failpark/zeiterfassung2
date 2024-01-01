@@ -105,12 +105,12 @@ pub fn generate_user() -> CreateUser {
 	Faker.fake_with_rng(&mut rng)
 }
 
-pub trait AuthHeader {
-	fn add_auth_header(self, token: String) -> Self;
+pub trait AuthHeader<'a> {
+	fn add_auth_header(self, token: &'_ str) -> Self;
 }
 
-impl AuthHeader for LocalRequest<'_> {
-	fn add_auth_header(mut self, token: String) -> Self {
+impl AuthHeader<'_> for LocalRequest<'_> {
+	fn add_auth_header(mut self, token: &str) -> Self {
 		self.add_header(Header::new("Authorization", format!("Bearer {}", token)));
 		self
 	}
@@ -118,6 +118,7 @@ impl AuthHeader for LocalRequest<'_> {
 
 pub fn get_admin_token(client: &Client, password: Option<String>) -> [String; 2] {
 	let [admin_email, admin_password] = create_admin(client, password).unwrap();
+	println!("Admin email: {admin_email}");
 	let token = client
 		.post("/login")
 		.body(
@@ -128,4 +129,14 @@ pub fn get_admin_token(client: &Client, password: Option<String>) -> [String; 2]
 		.into_json::<Token>()
 		.unwrap();
 	[token.token, admin_email]
+}
+
+pub fn get_token(client: &Client, email: &str, password: &str) -> String {
+	let token = client
+		.post("/login")
+		.body(to_string(&Login::new(email, password)).expect("Could not serialize Login"))
+		.dispatch()
+		.into_json::<Token>()
+		.unwrap();
+	token.token
 }

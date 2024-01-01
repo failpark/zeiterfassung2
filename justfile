@@ -1,4 +1,5 @@
 alias c := check
+alias ct := compile-test
 alias r := run
 alias t := nextest
 
@@ -19,6 +20,9 @@ run *args:
 
 test *args:
 	cargo test {{ args }}
+
+compile-test *args:
+	cargo test --no-run {{ args }}
 
 nextest *args:
 	cargo nextest run {{ args }}

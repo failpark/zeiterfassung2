@@ -180,12 +180,15 @@ impl User {
 		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = user.count().get_result(db).await?;
-		let items = user
-			.limit(page_size)
-			.offset(page * page_size)
-			.load::<Self>(db)
-			.await?;
-
+		let items: Vec<User> = if page == 0 {
+			user.limit(page_size).load::<Self>(db).await?
+		} else {
+			user
+				.limit(page_size)
+				.offset(page * page_size)
+				.load::<Self>(db)
+				.await?
+		};
 		Ok(PaginationResult {
 			items,
 			total_items,
@@ -194,6 +197,15 @@ impl User {
 			/* ceiling division of integers */
 			num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
 		})
+	}
+
+	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+		use crate::schema::user::dsl::*;
+
+		trace!("Getting last page of user table for page_size {page_size}");
+
+		let total_items: i64 = user.count().get_result(db).await?;
+		Ok(total_items / page_size + i64::from(total_items % page_size != 0))
 	}
 
 	/// Update a row in `user`, identified by the primary key with [`UpdateUser`]
@@ -225,5 +237,31 @@ impl User {
 		diesel::delete(user.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+}
+
+#[cfg(test)]
+impl PartialEq for User {
+	fn eq(&self, other: &Self) -> bool {
+		self.id == other.id
+			&& self.username == other.username
+			&& self.firstname == other.firstname
+			&& self.lastname == other.lastname
+			&& self.email == other.email
+			&& self.hash == other.hash
+			&& self.sys_role == other.sys_role
+			&& self.created_at == other.created_at
+			&& self.updated_at == other.updated_at
+	}
+}
+
+#[cfg(test)]
+impl PartialEq<CreateUser> for User {
+	fn eq(&self, other: &CreateUser) -> bool {
+		self.username == other.username
+			&& self.firstname == other.firstname
+			&& self.lastname == other.lastname
+			&& self.email == other.email
+			&& self.sys_role == other.sys_role
 	}
 }
