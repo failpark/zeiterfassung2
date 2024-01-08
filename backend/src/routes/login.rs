@@ -75,6 +75,12 @@ async fn post_login<'r>(
 	)?))
 }
 
+pub fn mount() -> AdHoc {
+	AdHoc::on_ignite("Mount Login Routes", |rocket| async {
+		rocket.mount("/login", routes![post_login])
+	})
+}
+
 #[cfg(test)]
 mod test {
 	use pretty_assertions::assert_eq;
@@ -123,10 +129,4 @@ mod test {
 		assert!(tokenizer.verify(&token).is_ok());
 		cleanup_admin_user(&client, admin_email);
 	}
-}
-
-pub fn mount() -> AdHoc {
-	AdHoc::on_ignite("Mount Login Routes", |rocket| async {
-		rocket.mount("/login", routes![post_login])
-	})
 }

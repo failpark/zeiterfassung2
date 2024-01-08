@@ -37,7 +37,7 @@ pub struct PaginationResult<T> {
 }
 
 #[derive(Database)]
-#[database("zeiterfassung2")]
+#[database("zeiterfassung")]
 pub struct DB(MysqlPool);
 
 diesel::sql_function!(fn last_insert_id() -> Integer);
@@ -54,7 +54,7 @@ pub async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
 
 	let db_url: String = rocket
 		.figment()
-		.extract_inner("databases.zeiterfassung2.url")
+		.extract_inner("databases.zeiterfassung.url")
 		.expect("DB not configured");
 
 	rocket::tokio::task::spawn_blocking(move || {

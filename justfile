@@ -13,7 +13,7 @@ add *args:
 	cargo add {{ args }}
 
 check *args:
-	cargo clippy {{ args }}
+	cargo clippy {{ if args == "-t" { "--all-targets" } else { args } }}
 
 run *args:
 	cargo run {{ args }}

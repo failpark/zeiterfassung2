@@ -40,7 +40,7 @@ pub fn db_url(client: &Client) -> &'static str {
 		client
 			.rocket()
 			.figment()
-			.extract_inner("databases.zeiterfassung2.url")
+			.extract_inner("databases.zeiterfassung.url")
 			.unwrap()
 	})
 }
