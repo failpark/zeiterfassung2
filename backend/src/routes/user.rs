@@ -104,6 +104,10 @@ pub fn mount() -> AdHoc {
 
 #[cfg(test)]
 mod test {
+	use fake::{
+		faker::internet::en::Username,
+		Fake,
+	};
 	use pretty_assertions::{
 		assert_eq,
 		assert_ne,
@@ -121,6 +125,7 @@ mod test {
 		db::{
 			user::{
 				CreateUser,
+				UpdateUser,
 				User,
 			},
 			PaginationResult,
@@ -165,16 +170,21 @@ mod test {
 					.expect("Could not serialize ErrorJson")
 			)
 		);
-
-		user.username = "new_username".to_string();
+		let new_username = Username().fake::<String>();
+		user.username = new_username.clone();
+		let update_user = UpdateUser {
+			username: Some(new_username.clone()),
+			..Default::default()
+		};
 		let response = client
 			.patch(format!("/user/{user_id}"))
-			.body(to_string(&user).expect("Could not serialize CreateUser"))
+			.body(to_string(&update_user).expect("Could not serialize CreateUser"))
 			.add_auth_header(&token)
 			.dispatch();
 		assert_eq!(response.status(), Status::Ok);
 		let updated_user = response.into_json::<User>().unwrap();
-		assert_eq!(updated_user, user);
+		assert_eq!(updated_user.username, new_username);
+		assert_eq!(updated_user.firstname, user.firstname);
 		// They should differ because the password is hashed and updated_at is updated and username is changed
 		assert_ne!(updated_user, inserted_user);
 
