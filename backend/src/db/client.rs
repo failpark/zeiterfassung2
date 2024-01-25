@@ -1,3 +1,8 @@
+#[cfg(test)]
+use fake::{
+	faker::company::en::*,
+	Dummy,
+};
 use rocket_db_pools::{
 	diesel::{
 		insert_into,
@@ -15,12 +20,12 @@ use crate::{
 	schema::*,
 	DB,
 };
-
 /// Struct representing a row in table `client`
 #[derive(
 	Debug, Clone, serde::Serialize, serde::Deserialize, Queryable, Selectable, QueryableByName,
 )]
 #[diesel(table_name = client, primary_key(id))]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct Client {
 	/// Field representing column `id`
 	pub id: i32,
@@ -35,8 +40,10 @@ pub struct Client {
 /// Create Struct for a row in table `client` for [`Client`]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name = client)]
+#[cfg_attr(test, derive(Dummy))]
 pub struct CreateClient {
 	/// Field representing column `name`
+	#[cfg_attr(test, dummy(faker = "CompanyName()"))]
 	pub name: String,
 }
 
@@ -144,5 +151,22 @@ impl Client {
 		diesel::delete(client.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+
+	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+		use crate::schema::client::dsl::*;
+
+		trace!("Getting last page of client table for page_size {page_size}");
+
+		let total_items: i64 = client.count().get_result(db).await?;
+		// index starts at 0
+		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
+	}
+}
+
+#[cfg(test)]
+impl PartialEq<CreateClient> for Client {
+	fn eq(&self, other: &CreateClient) -> bool {
+		self.name == other.name
 	}
 }

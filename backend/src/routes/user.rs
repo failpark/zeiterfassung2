@@ -213,6 +213,7 @@ mod test {
 		cleanup_admin_user(&client, admin_email);
 	}
 
+	#[derive(Default)]
 	struct UserList {
 		users: Vec<User>,
 		create_users: Vec<CreateUser>,
@@ -222,10 +223,7 @@ mod test {
 	fn users() {
 		let client = Client::tracked(rocket()).unwrap();
 		let [token, admin_email] = get_admin_token(&client, None);
-		let mut user_list = UserList {
-			users: Vec::new(),
-			create_users: Vec::new(),
-		};
+		let mut user_list = UserList::default();
 		for _ in 0..10 {
 			let user = generate_user();
 			user_list.create_users.push(user.clone());
@@ -270,12 +268,29 @@ mod test {
 			.add_auth_header(&user_token)
 			.dispatch();
 		assert_eq!(response.status(), Status::Ok);
-		let next_users = response
-			.into_json::<PaginationResult<User>>()
-			.unwrap()
-			.items;
+		let pagination = response.into_json::<PaginationResult<User>>().unwrap();
+		let next_users = pagination.items;
 		assert!(next_users.len() == 5);
 		assert_ne!(users, next_users);
+
+		let response = client
+			.get(format!("/user/page/5/{}", pagination.num_pages - 1))
+			.add_auth_header(&user_token)
+			.dispatch();
+		let pagination = response.into_json::<PaginationResult<User>>().unwrap();
+		let last_page_items: usize = (pagination.total_items - (pagination.num_pages - 1) * 5)
+			.try_into()
+			.unwrap();
+		// reverse to get items from the bottom
+		let last_page_items = 10 - last_page_items;
+		assert_eq!(pagination.items, user_list.users[last_page_items..]);
+
+		let response = client
+			.get("/user/page/5/last")
+			.add_auth_header(&user_token)
+			.dispatch();
+		let last_page = response.into_json::<PaginationResult<User>>().unwrap();
+		assert_eq!(last_page, pagination);
 
 		// cleanup users
 		for user in user_list.users {

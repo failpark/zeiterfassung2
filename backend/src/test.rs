@@ -27,7 +27,10 @@ use rocket::{
 
 use crate::{
 	auth::Tokenizer,
-	db::user::CreateUser,
+	db::{
+		client::CreateClient,
+		user::CreateUser,
+	},
 	routes::login::{
 		Login,
 		Token,
@@ -100,6 +103,11 @@ pub fn create_admin(client: &Client, password: Option<String>) -> anyhow::Result
 	Ok([admin_email, admin_password])
 }
 
+pub fn generate_client() -> CreateClient {
+	let mut rng = StdRng::from_entropy();
+	Faker.fake_with_rng(&mut rng)
+}
+
 pub fn generate_user() -> CreateUser {
 	let mut rng = StdRng::from_entropy();
 	Faker.fake_with_rng(&mut rng)
@@ -129,6 +137,26 @@ pub fn get_admin_token(client: &Client, password: Option<String>) -> [String; 2]
 		.into_json::<Token>()
 		.unwrap();
 	[token.token, admin_email]
+}
+
+/// Get a token for a test user
+pub fn get_token_user(client: &Client) -> &'static str {
+	static TOKEN: OnceLock<String> = OnceLock::new();
+	TOKEN.get_or_init(|| {
+		let mut user = generate_user();
+		let password = user.hash;
+		user.hash = Tokenizer::hash_password(password.as_bytes()).unwrap();
+		create_user(client, user.clone()).expect("Creating test user failed");
+		get_token(client, &user.email, &password)
+	})
+}
+
+pub fn get_token_admin(client: &Client) -> &'static str {
+	static TOKEN: OnceLock<String> = OnceLock::new();
+	TOKEN.get_or_init(|| {
+		let [token, _email] = get_admin_token(client, None);
+		token
+	})
 }
 
 pub fn get_token(client: &Client, email: &str, password: &str) -> String {

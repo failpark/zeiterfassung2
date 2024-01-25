@@ -48,6 +48,7 @@ fn rocket() -> _ {
 		.attach(AdHoc::on_ignite("Run Migrations", db::run_migrations))
 		.attach(routes::login::mount())
 		.attach(routes::user::mount())
+		.attach(routes::client::mount())
 		.manage(auth::Tokenizer::new(std::time::Duration::new(
 			5 * 24 * 60 * 60,
 			0,

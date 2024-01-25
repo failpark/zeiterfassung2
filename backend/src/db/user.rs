@@ -205,7 +205,8 @@ impl User {
 		trace!("Getting last page of user table for page_size {page_size}");
 
 		let total_items: i64 = user.count().get_result(db).await?;
-		Ok(total_items / page_size + i64::from(total_items % page_size != 0))
+		// index starts at 0
+		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
 	}
 
 	/// Update a row in `user`, identified by the primary key with [`UpdateUser`]

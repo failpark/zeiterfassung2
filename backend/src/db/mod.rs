@@ -20,9 +20,10 @@ pub mod project;
 pub mod tracking;
 pub mod tracking_to_activity;
 pub mod user;
+// pub mod helper;
 
 /// Result of a `.paginate` function
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct PaginationResult<T> {
 	/// Resulting items that are from the current page
 	pub items: Vec<T>,
