@@ -1,3 +1,8 @@
+#[cfg(test)]
+use fake::{
+	faker::lorem::en::*,
+	Dummy,
+};
 use rocket_db_pools::{
 	diesel::{
 		insert_into,
@@ -21,6 +26,7 @@ use crate::{
 	Debug, Clone, serde::Serialize, serde::Deserialize, Queryable, Selectable, QueryableByName,
 )]
 #[diesel(table_name = activity, primary_key(id))]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct Activity {
 	/// Field representing column `id`
 	pub id: i32,
@@ -37,10 +43,12 @@ pub struct Activity {
 /// Create Struct for a row in table `activity` for [`Activity`]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name = activity)]
+#[cfg_attr(test, derive(Dummy))]
 pub struct CreateActivity {
 	/// Field representing column `token`
 	pub token: Option<String>,
 	/// Field representing column `name`
+	#[cfg_attr(test, dummy(faker = "Word()"))]
 	pub name: String,
 }
 
@@ -151,5 +159,22 @@ impl Activity {
 		diesel::delete(activity.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+
+	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+		use crate::schema::activity::dsl::*;
+
+		trace!("Getting last page of activity table for page_size {page_size}");
+
+		let total_items: i64 = activity.count().get_result(db).await?;
+		// index starts at 0
+		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
+	}
+}
+
+#[cfg(test)]
+impl PartialEq<CreateActivity> for Activity {
+	fn eq(&self, other: &CreateActivity) -> bool {
+		self.name == other.name && self.token == other.token
 	}
 }

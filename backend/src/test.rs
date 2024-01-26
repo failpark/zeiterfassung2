@@ -1,3 +1,4 @@
+mod gen_fns;
 use std::sync::OnceLock;
 
 use diesel::{
@@ -8,14 +9,7 @@ use diesel::{
 		PooledConnection,
 	},
 };
-use fake::{
-	Fake,
-	Faker,
-};
-use rand::{
-	rngs::StdRng,
-	SeedableRng,
-};
+pub use gen_fns::*;
 use rocket::{
 	http::Header,
 	local::blocking::{
@@ -27,10 +21,7 @@ use rocket::{
 
 use crate::{
 	auth::Tokenizer,
-	db::{
-		client::CreateClient,
-		user::CreateUser,
-	},
+	db::user::CreateUser,
 	routes::login::{
 		Login,
 		Token,
@@ -101,16 +92,6 @@ pub fn create_admin(client: &Client, password: Option<String>) -> anyhow::Result
 	let admin_email = admin.email.clone();
 	create_user(client, admin).expect("Creating admin failed");
 	Ok([admin_email, admin_password])
-}
-
-pub fn generate_client() -> CreateClient {
-	let mut rng = StdRng::from_entropy();
-	Faker.fake_with_rng(&mut rng)
-}
-
-pub fn generate_user() -> CreateUser {
-	let mut rng = StdRng::from_entropy();
-	Faker.fake_with_rng(&mut rng)
 }
 
 pub trait AuthHeader<'a> {
