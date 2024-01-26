@@ -25,6 +25,7 @@ diesel::table! {
 diesel::table! {
 		project (id) {
 				id -> Integer,
+				client_id -> Integer,
 				#[max_length = 255]
 				name -> Varchar,
 				created_at -> Timestamp,
@@ -78,6 +79,7 @@ diesel::table! {
 		}
 }
 
+diesel::joinable!(project -> client (client_id));
 diesel::joinable!(tracking -> client (client_id));
 diesel::joinable!(tracking -> project (project_id));
 diesel::joinable!(tracking -> user (user_id));

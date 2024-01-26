@@ -1,3 +1,8 @@
+#[cfg(test)]
+use fake::{
+	faker::lorem::en::*,
+	Dummy,
+};
 use rocket_db_pools::{
 	diesel::{
 		insert_into,
@@ -7,6 +12,7 @@ use rocket_db_pools::{
 };
 
 use super::{
+	client::Client,
 	last_insert_id,
 	PaginationResult,
 };
@@ -17,12 +23,23 @@ use crate::{
 
 /// Struct representing a row in table `project`
 #[derive(
-	Debug, Clone, serde::Serialize, serde::Deserialize, Queryable, Selectable, QueryableByName,
+	Debug,
+	Clone,
+	serde::Serialize,
+	serde::Deserialize,
+	Queryable,
+	Selectable,
+	QueryableByName,
+	Associations,
+	Identifiable,
 )]
-#[diesel(table_name=project, primary_key(id))]
+#[diesel(table_name=project, primary_key(id), belongs_to(Client, foreign_key=client_id))]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct Project {
 	/// Field representing column `id`
 	pub id: i32,
+	/// Field representing column `client_id`
+	pub client_id: i32,
 	/// Field representing column `name`
 	pub name: String,
 	/// Field representing column `created_at`
@@ -34,8 +51,12 @@ pub struct Project {
 /// Create Struct for a row in table `project` for [`Project`]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Insertable)]
 #[diesel(table_name=project)]
+#[cfg_attr(test, derive(Dummy))]
 pub struct CreateProject {
+	/// Field representing column `client_id`
+	pub client_id: i32,
 	/// Field representing column `name`
+	#[cfg_attr(test, dummy(faker = "Word()"))]
 	pub name: String,
 }
 
@@ -141,5 +162,21 @@ impl Project {
 		diesel::delete(project.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+		use crate::schema::client::dsl::*;
+
+		trace!("Getting last page of client table for page_size {page_size}");
+
+		let total_items: i64 = client.count().get_result(db).await?;
+		// index starts at 0
+		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
+	}
+}
+
+#[cfg(test)]
+impl PartialEq<CreateProject> for Project {
+	fn eq(&self, other: &CreateProject) -> bool {
+		self.name == other.name
 	}
 }

@@ -50,6 +50,7 @@ fn rocket() -> _ {
 		.attach(routes::activity::mount())
 		.attach(routes::user::mount())
 		.attach(routes::client::mount())
+		.attach(routes::project::mount())
 		.manage(auth::Tokenizer::new(std::time::Duration::new(
 			5 * 24 * 60 * 60,
 			0,

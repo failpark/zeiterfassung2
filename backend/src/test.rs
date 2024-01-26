@@ -1,4 +1,5 @@
 mod gen_fns;
+mod methods;
 use std::sync::OnceLock;
 
 use diesel::{

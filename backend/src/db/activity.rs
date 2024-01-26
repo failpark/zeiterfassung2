@@ -2,6 +2,7 @@
 use fake::{
 	faker::lorem::en::*,
 	Dummy,
+	Fake,
 };
 use rocket_db_pools::{
 	diesel::{
@@ -48,7 +49,10 @@ pub struct CreateActivity {
 	/// Field representing column `token`
 	pub token: Option<String>,
 	/// Field representing column `name`
-	#[cfg_attr(test, dummy(faker = "Word()"))]
+	#[cfg_attr(
+		test,
+		dummy(expr = "Word().fake::<String>() + \" \" + &Word().fake::<String>()")
+	)]
 	pub name: String,
 }
 
