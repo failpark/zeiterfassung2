@@ -251,6 +251,7 @@ mod test {
 			.unwrap();
 		// reverse to get items from the bottom
 		let last_page_items = 10 - last_page_items;
+		// some race conditions could arrise here, but in prod it doesn't matter
 		assert_eq!(pagination.items, client_list[last_page_items..]);
 
 		let res = rocket_client

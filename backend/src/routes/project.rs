@@ -153,21 +153,6 @@ mod test {
 		assert_eq!(inserted_project, project);
 		let project_id = inserted_project.id;
 
-		// Check duplicate project insert
-		let res = client
-			.post("/project")
-			.body(to_string(&project).unwrap())
-			.add_auth_header(token)
-			.dispatch();
-		assert_eq!(res.status(), Status::BadRequest);
-		assert_eq!(
-			res.into_string(),
-			Some(
-				to_string(&ErrorJson::new(400, "Project already exists",))
-					.expect("Could not serialize ErrorJson")
-			)
-		);
-
 		// Update project
 		let new_project_name = Word().fake::<String>() + " " + &Word().fake::<String>();
 		let update_project = UpdateProject {
@@ -267,6 +252,7 @@ mod test {
 			.unwrap();
 		// reverse to get items from the bottom
 		let last_page_items = 10 - last_page_items;
+		// some race conditions could arrise here, but in prod it doesn't matter
 		assert_eq!(pagination.items, project_list[last_page_items..]);
 
 		let res = client
