@@ -95,7 +95,7 @@ mod test {
 		auth::Tokenizer,
 		error::ErrorJson,
 		rocket,
-		test::{
+		test::db::{
 			cleanup_admin_user,
 			create_admin,
 		},

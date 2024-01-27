@@ -15,7 +15,7 @@ use rocket::{
 	serde::json::to_string,
 };
 
-use super::AuthHeader;
+use super::token::AuthHeader;
 
 macro_rules! build_faker_fn {
 	($name:tt) => {

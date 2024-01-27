@@ -1,7 +1,8 @@
 #[cfg(test)]
 use fake::{
-	faker::lorem::en::*,
+	faker::company::en::*,
 	Dummy,
+	Fake,
 };
 use rocket_db_pools::{
 	diesel::{
@@ -56,7 +57,13 @@ pub struct CreateProject {
 	/// Field representing column `client_id`
 	pub client_id: i32,
 	/// Field representing column `name`
-	#[cfg_attr(test, dummy(faker = "Word()"))]
+	#[cfg_attr(
+		test,
+		dummy(
+			expr = "BsVerb().fake::<String>() + \" \" + &BsAdj().fake::<String>() + \" \" + \
+			        &BsNoun().fake::<String>()"
+		)
+	)]
 	pub name: String,
 }
 

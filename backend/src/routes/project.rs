@@ -110,22 +110,22 @@ mod test {
 		db::{
 			client::Client,
 			project::{
-				CreateProject,
 				Project,
 				UpdateProject,
 			},
 			PaginationResult,
 		},
-		error::ErrorJson,
 		rocket,
 		test::{
 			create_client,
 			create_project,
 			generate_client,
 			generate_project,
-			get_token_admin,
-			get_token_user,
-			AuthHeader,
+			token::{
+				get_token_admin,
+				get_token_user,
+				AuthHeader,
+			},
 		},
 	};
 

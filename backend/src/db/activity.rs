@@ -1,6 +1,6 @@
 #[cfg(test)]
 use fake::{
-	faker::lorem::en::*,
+	faker::company::en::*,
 	Dummy,
 	Fake,
 };
@@ -51,7 +51,10 @@ pub struct CreateActivity {
 	/// Field representing column `name`
 	#[cfg_attr(
 		test,
-		dummy(expr = "Word().fake::<String>() + \" \" + &Word().fake::<String>()")
+		dummy(
+			expr = "BsVerb().fake::<String>() + \" \" + &BsAdj().fake::<String>() + \" \" + \
+			        &BsNoun().fake::<String>()"
+		)
 	)]
 	pub name: String,
 }

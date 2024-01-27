@@ -133,11 +133,13 @@ mod test {
 		error::ErrorJson,
 		rocket,
 		test::{
-			cleanup_admin_user,
+			db::cleanup_admin_user,
 			generate_user,
-			get_admin_token,
-			get_token,
-			AuthHeader,
+			token::{
+				get_admin_token,
+				get_token,
+				AuthHeader,
+			},
 		},
 	};
 

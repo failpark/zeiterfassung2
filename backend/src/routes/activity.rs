@@ -114,9 +114,11 @@ mod test {
 		rocket,
 		test::{
 			generate_activity,
-			get_token_admin,
-			get_token_user,
-			AuthHeader,
+			token::{
+				get_token_admin,
+				get_token_user,
+				AuthHeader,
+			},
 		},
 	};
 

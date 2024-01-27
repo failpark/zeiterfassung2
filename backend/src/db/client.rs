@@ -2,6 +2,7 @@
 use fake::{
 	faker::company::en::*,
 	Dummy,
+	Fake,
 };
 use rocket_db_pools::{
 	diesel::{
@@ -43,7 +44,13 @@ pub struct Client {
 #[cfg_attr(test, derive(Dummy))]
 pub struct CreateClient {
 	/// Field representing column `name`
-	#[cfg_attr(test, dummy(faker = "CompanyName()"))]
+	#[cfg_attr(
+		test,
+		dummy(
+			expr = "CompanyName().fake::<String>() + \" \" + &Buzzword().fake::<String>() + \" \" + \
+			        &CompanySuffix().fake::<String>()"
+		)
+	)]
 	pub name: String,
 }
 
