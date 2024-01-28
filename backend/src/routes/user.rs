@@ -1,5 +1,10 @@
 use rocket::{
+	delete,
 	fairing::AdHoc,
+	get,
+	patch,
+	post,
+	routes,
 	serde::json::Json,
 };
 use rocket_db_pools::Connection;
@@ -27,7 +32,7 @@ async fn create(
 	if user.sys_role != "admin" {
 		return Err(Error::ForbiddenAccess);
 	}
-	create_user.hash = Tokenizer::hash_password(create_user.hash.as_bytes())?;
+	create_user.password = Tokenizer::hash_password(create_user.password.as_bytes())?;
 	let user = User::create(&mut db, &create_user).await;
 	if let Ok(user) = user {
 		Ok(Json(user))
@@ -75,12 +80,12 @@ async fn get_last_page(
 	Ok(Json(User::paginate(&mut db, last_page, page_size).await?))
 }
 
-#[delete("/", data = "<user_id>")]
-async fn delete(user: User, mut db: Connection<DB>, user_id: Json<i32>) -> Result<(), Error> {
+#[delete("/<id>")]
+async fn delete(user: User, mut db: Connection<DB>, id: i32) -> Result<(), Error> {
 	if user.sys_role != "admin" {
 		return Err(Error::ForbiddenAccess);
 	}
-	User::delete(&mut db, *user_id).await?;
+	User::delete(&mut db, id).await?;
 	Ok(())
 }
 
@@ -114,17 +119,13 @@ mod test {
 	};
 	use rocket::{
 		http::Status,
-		local::blocking::{
-			Client,
-			LocalResponse,
-		},
+		local::blocking::Client,
 		serde::json::to_string,
 	};
 
 	use crate::{
 		db::{
 			user::{
-				CreateUser,
 				UpdateUser,
 				User,
 			},
@@ -133,12 +134,16 @@ mod test {
 		error::ErrorJson,
 		rocket,
 		test::{
-			db::cleanup_admin_user,
 			generate_user,
+			methods::{
+				delete,
+				get,
+				patch,
+				post,
+			},
 			token::{
-				get_admin_token,
-				get_token,
-				AuthHeader,
+				get_token_admin,
+				get_token_user,
 			},
 		},
 	};
@@ -147,26 +152,24 @@ mod test {
 	fn user() {
 		let client = Client::tracked(rocket()).unwrap();
 		let mut user = generate_user();
+		let base_url = String::from("/user");
 
 		// Test unauthorized
-		let response = client
-			.post("/user")
-			.body(to_string(&user).expect("Could not serialize CreateUser"))
-			.dispatch();
-		assert_eq!(response.status(), Status::Unauthorized);
+		let res = post(&client, &base_url, to_string(&user).unwrap(), "");
+		assert_eq!(res.status(), Status::Unauthorized);
 
-		let [token, admin_email] = get_admin_token(&client, None);
+		let token = get_token_admin(&client);
 		// Create new user
-		let response = create_user(&client, user.clone(), &token);
-		let inserted_user = response.into_json::<User>().unwrap();
+		let res = post(&client, &base_url, to_string(&user).unwrap(), token);
+		let inserted_user = res.into_json::<User>().unwrap();
 		assert_eq!(inserted_user, user);
 		let user_id = inserted_user.id;
 
 		// Check duplicate user insert
-		let response = create_user(&client, user.clone(), &token);
-		assert_eq!(response.status(), Status::BadRequest);
+		let res = post(&client, &base_url, to_string(&user).unwrap(), token);
+		assert_eq!(res.status(), Status::BadRequest);
 		assert_eq!(
-			response.into_string(),
+			res.into_string(),
 			Some(
 				to_string(&ErrorJson::new(400, "User already exists"))
 					.expect("Could not serialize ErrorJson")
@@ -178,140 +181,88 @@ mod test {
 			username: Some(new_username.clone()),
 			..Default::default()
 		};
-		let response = client
-			.patch(format!("/user/{user_id}"))
-			.body(to_string(&update_user).expect("Could not serialize CreateUser"))
-			.add_auth_header(&token)
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
-		let updated_user = response.into_json::<User>().unwrap();
+		let url = format!("{base_url}/{user_id}");
+		let res = patch(&client, &url, to_string(&update_user).unwrap(), token);
+		assert_eq!(res.status(), Status::Ok);
+		let updated_user = res.into_json::<User>().unwrap();
 		assert_eq!(updated_user.username, new_username);
 		assert_eq!(updated_user.firstname, user.firstname);
 		// They should differ because the password is hashed and updated_at is updated and username is changed
 		assert_ne!(updated_user, inserted_user);
 
-		let response = client
-			.get(format!("/user/{}", user_id))
-			.add_auth_header(&token)
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
-		let response = response.into_json::<User>().unwrap();
-		assert_eq!(response, user);
-		assert_eq!(response, updated_user);
+		let res = get(&client, &url, token);
+		assert_eq!(res.status(), Status::Ok);
+		let res = res.into_json::<User>().unwrap();
+		assert_eq!(res, user);
+		assert_eq!(res, updated_user);
 
 		// Test inserting as normal user -> should fail
-		let user_token = get_token(&client, &user.email, &user.hash);
-		let response = create_user(&client, generate_user(), &user_token);
-		assert_eq!(response.status(), Status::Forbidden);
+		let user_token = get_token_user(&client);
+		let user = generate_user();
+		let res = post(&client, &base_url, to_string(&user).unwrap(), user_token);
+		assert_eq!(res.status(), Status::Forbidden);
 
 		// test deleting user
-		let response = client
-			.delete("/user")
-			.body(user_id.to_string())
-			.add_auth_header(&token)
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
-
-		cleanup_admin_user(&client, admin_email);
-	}
-
-	#[derive(Default)]
-	struct UserList {
-		users: Vec<User>,
-		create_users: Vec<CreateUser>,
+		let res = delete(&client, &url, token);
+		assert_eq!(res.status(), Status::Ok);
 	}
 
 	#[test]
 	fn users() {
 		let client = Client::tracked(rocket()).unwrap();
-		let [token, admin_email] = get_admin_token(&client, None);
-		let mut user_list = UserList::default();
+		let token = get_token_admin(&client);
+		let base_url = String::from("/user");
+		let mut user_list = Vec::new();
 		for _ in 0..10 {
 			let user = generate_user();
-			user_list.create_users.push(user.clone());
-			let response = create_user(&client, user, &token);
-			assert_eq!(response.status(), Status::Ok);
-			user_list.users.push(response.into_json::<User>().unwrap());
+			let res = post(&client, &base_url, to_string(&user).unwrap(), token);
+			assert_eq!(res.status(), Status::Ok);
+			user_list.push(res.into_json::<User>().unwrap());
 		}
-		println!("Users: {:#?}", user_list.users);
-		let user_token = get_token(
-			&client,
-			&user_list.users[0].email,
-			&user_list.create_users[0].hash,
-		);
+		let user_token = get_token_user(&client);
 
 		// get single user from id
-		let response = client
-			.get(format!("/user/{}", user_list.users[0].id))
-			.dispatch();
-		assert_eq!(response.status(), Status::Unauthorized);
-		let response = client
-			.get(format!("/user/{}", user_list.users[0].id))
-			.add_auth_header(&user_token)
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
-		assert_eq!(response.into_json::<User>().unwrap(), user_list.users[0]);
+		let url = format!("{base_url}/{}", user_list[0].id);
+		let res = get(&client, &url, "");
+		assert_eq!(res.status(), Status::Unauthorized);
+		let res = get(&client, &url, user_token);
+		assert_eq!(res.status(), Status::Ok);
+		assert_eq!(res.into_json::<User>().unwrap(), user_list[0]);
 
 		// get first page of users with page_size 5
-		let response = client
-			.get("/user/page/5/0")
-			.add_auth_header(&user_token)
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
-		let users = response
-			.into_json::<PaginationResult<User>>()
-			.unwrap()
-			.items;
-		assert!(users.len() == 5);
+		let res = get(&client, "/user/page/5/0", user_token);
+		assert_eq!(res.status(), Status::Ok);
+		let pagination = res.into_json::<PaginationResult<User>>().unwrap();
+		assert_eq!(pagination.page, 0);
+		assert_eq!(pagination.page_size, 5);
 
-		// get next page of users with page_size 5
-		let response = client
-			.get("/user/page/5/1")
-			.add_auth_header(&user_token)
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
-		let pagination = response.into_json::<PaginationResult<User>>().unwrap();
-		let next_users = pagination.items;
-		assert!(next_users.len() == 5);
-		assert_ne!(users, next_users);
-
-		let response = client
-			.get(format!("/user/page/5/{}", pagination.num_pages - 1))
-			.add_auth_header(&user_token)
-			.dispatch();
-		let pagination = response.into_json::<PaginationResult<User>>().unwrap();
+		// get last page of users with page_size 5 with number
+		let url = format!("{base_url}/page/5/{}", pagination.num_pages - 1);
+		let res = get(&client, &url, user_token);
+		assert_eq!(res.status(), Status::Ok);
+		let pagination = res.into_json::<PaginationResult<User>>().unwrap();
+		// the last page contains 5 OR LESS items
 		let last_page_items: usize = (pagination.total_items - (pagination.num_pages - 1) * 5)
 			.try_into()
 			.unwrap();
 		// reverse to get items from the bottom
 		let last_page_items = 10 - last_page_items;
-		assert_eq!(pagination.items, user_list.users[last_page_items..]);
+		// some race conditions could arrise here, but in prod it doesn't matter
+		assert_eq!(pagination.items, user_list[last_page_items..]);
 
-		let response = client
-			.get("/user/page/5/last")
-			.add_auth_header(&user_token)
-			.dispatch();
-		let last_page = response.into_json::<PaginationResult<User>>().unwrap();
+		let url = format!("{base_url}/page/5/last");
+		let res = get(&client, &url, user_token);
+		assert_eq!(res.status(), Status::Ok);
+		let last_page = res.into_json::<PaginationResult<User>>().unwrap();
 		assert_eq!(last_page, pagination);
 
-		// cleanup users
-		for user in user_list.users {
-			let response = client
-				.delete("/user")
-				.body(user.id.to_string())
-				.add_auth_header(&token)
-				.dispatch();
-			assert_eq!(response.status(), Status::Ok);
+		// delete all activitys
+		for user in user_list {
+			let url = format!("{base_url}/{}", user.id);
+			let res = delete(&client, &url, user_token);
+			assert_eq!(res.status(), Status::Unauthorized);
+			let res = delete(&client, &url, token);
+			assert_eq!(res.status(), Status::Ok);
 		}
-
-		cleanup_admin_user(&client, admin_email);
-	}
-
-	fn create_user<'a>(client: &'a Client, item: CreateUser, token: &str) -> LocalResponse<'a> {
-		client
-			.post("/user")
-			.body(to_string(&item).expect("Could not serialize CreateUser"))
-			.add_auth_header(token)
-			.dispatch()
 	}
 }

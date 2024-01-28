@@ -1,5 +1,10 @@
 use rocket::{
+	delete,
 	fairing::AdHoc,
+	get,
+	patch,
+	post,
+	routes,
 	serde::json::Json,
 };
 use rocket_db_pools::Connection;
@@ -114,10 +119,15 @@ mod test {
 		rocket,
 		test::{
 			generate_activity,
+			methods::{
+				delete,
+				get,
+				patch,
+				post,
+			},
 			token::{
 				get_token_admin,
 				get_token_user,
-				AuthHeader,
 			},
 		},
 	};
@@ -126,6 +136,7 @@ mod test {
 	fn activity() {
 		let client = Client::tracked(rocket()).unwrap();
 		let activity = generate_activity();
+		let base_url = String::from("/activity");
 
 		// Test unauthorized
 		let res = client
@@ -134,23 +145,19 @@ mod test {
 			.dispatch();
 		assert_eq!(res.status(), Status::Unauthorized);
 
+		// Test empty token
+		let res = post(&client, &base_url, to_string(&activity).unwrap(), "");
+		assert_eq!(res.status(), Status::Unauthorized);
+
 		let token = get_token_admin(&client);
 		// Create new activity
-		let res = client
-			.post("/activity")
-			.body(to_string(&activity).unwrap())
-			.add_auth_header(token)
-			.dispatch();
+		let res = post(&client, &base_url, to_string(&activity).unwrap(), token);
 		let inserted_activity = res.into_json::<Activity>().unwrap();
 		assert_eq!(inserted_activity, activity);
 		let activity_id = inserted_activity.id;
 
 		// Check duplicate activity insert
-		let res = client
-			.post("/activity")
-			.body(to_string(&activity).unwrap())
-			.add_auth_header(token)
-			.dispatch();
+		let res = post(&client, &base_url, to_string(&activity).unwrap(), token);
 		assert_eq!(res.status(), Status::BadRequest);
 		assert_eq!(
 			res.into_string(),
@@ -168,39 +175,31 @@ mod test {
 			name: Some(new_company_name.clone()),
 			..Default::default()
 		};
-		let res = client
-			.patch(format!("/activity/{activity_id}"))
-			.body(to_string(&update_activity).expect("Could not serialize UpdateActivity"))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/{activity_id}");
+		let res = patch(&client, &url, to_string(&update_activity).unwrap(), token);
 		assert_eq!(res.status(), Status::Ok);
 		let updated_activity = res.into_json::<Activity>().unwrap();
 		assert_eq!(updated_activity.name, new_company_name);
 		assert_ne!(updated_activity, inserted_activity);
 
 		// Get activity
-		let res = client
-			.get(format!("/activity/{activity_id}"))
-			.add_auth_header(token)
-			.dispatch();
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let res = res.into_json::<Activity>().unwrap();
 		assert_eq!(res, updated_activity);
 
 		// Test inserting as normal user
 		let user_token = get_token_user(&client);
-		let res = client
-			.post("/activity")
-			.body(to_string(&activity).unwrap())
-			.add_auth_header(user_token)
-			.dispatch();
+		let res = post(
+			&client,
+			"/activity",
+			to_string(&activity).unwrap(),
+			user_token,
+		);
 		assert_eq!(res.status(), Status::Forbidden);
 
 		// delete activity
-		let res = client
-			.delete(format!("/activity/{activity_id}"))
-			.add_auth_header(token)
-			.dispatch();
+		let res = delete(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 	}
 
@@ -208,16 +207,13 @@ mod test {
 	fn activities() {
 		let client = Client::tracked(rocket()).unwrap();
 		let token = get_token_admin(&client);
+		let base_url = String::from("/activity");
 
 		let mut activity_list: Vec<Activity> = Vec::new();
 		// insert multiple activitys
 		for _ in 0..10 {
 			let activity = generate_activity();
-			let res = client
-				.post("/activity")
-				.body(to_string(&activity).unwrap())
-				.add_auth_header(token)
-				.dispatch();
+			let res = post(&client, "/activity", to_string(&activity).unwrap(), token);
 			if res.status() != Status::Ok {
 				dbg!(res.into_string());
 				panic!();
@@ -225,28 +221,21 @@ mod test {
 			activity_list.push(res.into_json::<Activity>().unwrap());
 		}
 
-		let res = client
-			.get(format!("/activity/{}", activity_list[0].id))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/{}", activity_list[0].id);
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		assert_eq!(res.into_json::<Activity>().unwrap(), activity_list[0]);
 
 		// get first page of users with page_size 5
-		let res = client
-			.get("/activity/page/5/0")
-			.add_auth_header(token)
-			.dispatch();
+		let res = get(&client, "/activity/page/5/0", token);
 		assert_eq!(res.status(), Status::Ok);
 		let pagination = res.into_json::<PaginationResult<Activity>>().unwrap();
 		assert_eq!(pagination.page, 0);
 		assert_eq!(pagination.page_size, 5);
 
 		// get last page of users with page_size 5 with number
-		let res = client
-			.get(format!("/activity/page/5/{}", pagination.num_pages - 1))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/{}", pagination.num_pages - 1);
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let pagination = res.into_json::<PaginationResult<Activity>>().unwrap();
 		// the last page contains 5 OR LESS items
@@ -255,22 +244,19 @@ mod test {
 			.unwrap();
 		// reverse to get items from the bottom
 		let last_page_items = 10 - last_page_items;
+		// some race conditions could arrise here, but in prod it doesn't matter
 		assert_eq!(pagination.items, activity_list[last_page_items..]);
 
-		let res = client
-			.get("/activity/page/5/last")
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/last");
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let last_page = res.into_json::<PaginationResult<Activity>>().unwrap();
 		assert_eq!(last_page, pagination);
 
 		// delete all activitys
 		for activity in activity_list {
-			let res = client
-				.delete(format!("/activity/{}", activity.id))
-				.add_auth_header(token)
-				.dispatch();
+			let url = format!("{base_url}/{}", activity.id);
+			let res = delete(&client, &url, token);
 			assert_eq!(res.status(), Status::Ok);
 		}
 	}

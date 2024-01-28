@@ -1,14 +1,17 @@
 use rocket::{
 	fairing::AdHoc,
+	post,
 	request::Request,
 	response::{
 		content,
 		Responder as ResponderImpl,
 	},
+	routes,
 	serde::json::{
 		to_string,
 		Json,
 	},
+	Responder,
 	State,
 };
 use rocket_db_pools::Connection;
@@ -16,6 +19,7 @@ use serde::{
 	Deserialize,
 	Serialize,
 };
+use tracing::trace;
 
 use crate::{
 	auth::Tokenizer,
@@ -95,9 +99,12 @@ mod test {
 		auth::Tokenizer,
 		error::ErrorJson,
 		rocket,
-		test::db::{
-			cleanup_admin_user,
-			create_admin,
+		test::{
+			db::{
+				cleanup_admin_user,
+				create_admin,
+			},
+			methods::post,
 		},
 	};
 
@@ -109,23 +116,28 @@ mod test {
 			email: admin_email.as_str(),
 			password: admin_password.as_str(),
 		};
-		let response = client
-			.post("/login")
-			.body(format!("email={}&password=Admin_01!", login.email))
-			.dispatch();
-		assert_eq!(response.status(), Status::BadRequest);
+		let url = String::from("/login");
+		let res = post(
+			&client,
+			&url,
+			format!("email={}&password=Admin_01!", login.email),
+			"",
+		);
+		assert_eq!(res.status(), Status::BadRequest);
 		assert_eq!(
-			response.into_string(),
+			res.into_string(),
 			Some(to_string(&ErrorJson::new(400, "Bad Request")).expect("Could not serialize ErrorJson"))
 		);
 
-		let response = client
-			.post("/login")
-			.body(to_string(&login).expect("Could not serialize Login"))
-			.dispatch();
-		assert_eq!(response.status(), Status::Ok);
+		let res = post(
+			&client,
+			&url,
+			to_string(&login).expect("Could not serialize Login"),
+			"",
+		);
+		assert_eq!(res.status(), Status::Ok);
 		let tokenizer = client.rocket().state::<Tokenizer>().unwrap();
-		let token = response.into_json::<Token>().unwrap().token;
+		let token = res.into_json::<Token>().unwrap().token;
 		assert!(tokenizer.verify(&token).is_ok());
 		cleanup_admin_user(&client, admin_email);
 	}

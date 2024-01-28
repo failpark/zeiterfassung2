@@ -1,9 +1,15 @@
 use rocket::{
+	catch,
 	http::{
 		Status,
 		StatusClass,
 	},
 	Request,
+};
+use tracing::{
+	debug,
+	error,
+	info,
 };
 
 use crate::error::ErrorJson;
@@ -13,7 +19,7 @@ use crate::error::ErrorJson;
 pub fn default_catcher(status: Status, request: &Request) -> String {
 	let error = ErrorJson::new(status.code, status.reason_lossy());
 	let json = rocket::serde::json::to_string(&error).expect("Could not serialize json");
-	let debug = format!(
+	let debug_msg = format!(
 		"Default Catcher with: {:?} for request_uri: {} and method: {}",
 		json,
 		request.uri(),
@@ -21,13 +27,13 @@ pub fn default_catcher(status: Status, request: &Request) -> String {
 	);
 	match status.class() {
 		StatusClass::Success | StatusClass::Informational => {
-			debug!("{}", debug);
+			debug!(debug_msg);
 		}
 		StatusClass::Redirection => {
-			info!("{}", debug);
+			info!(debug_msg);
 		}
 		StatusClass::ClientError | StatusClass::ServerError | StatusClass::Unknown => {
-			error!("{}", debug);
+			error!(debug_msg);
 		}
 	}
 

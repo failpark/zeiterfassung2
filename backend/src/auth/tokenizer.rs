@@ -3,7 +3,10 @@ use argon2::password_hash::{
 	PasswordHasher,
 };
 use jwt_simple::prelude::*;
-use tracing::error;
+use tracing::{
+	error,
+	trace,
+};
 
 use crate::{
 	Error,

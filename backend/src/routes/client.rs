@@ -1,5 +1,10 @@
 use rocket::{
+	delete,
 	fairing::AdHoc,
+	get,
+	patch,
+	post,
+	routes,
 	serde::json::Json,
 };
 use rocket_db_pools::Connection;
@@ -112,10 +117,15 @@ mod test {
 		rocket,
 		test::{
 			generate_client,
+			methods::{
+				delete,
+				get,
+				patch,
+				post,
+			},
 			token::{
 				get_token_admin,
 				get_token_user,
-				AuthHeader,
 			},
 		},
 	};
@@ -124,6 +134,7 @@ mod test {
 	fn client() {
 		let rocket_client = RocketClient::tracked(rocket()).unwrap();
 		let client = generate_client();
+		let base_url = String::from("/client");
 
 		// Test unauthorized
 		let res = rocket_client
@@ -132,23 +143,29 @@ mod test {
 			.dispatch();
 		assert_eq!(res.status(), Status::Unauthorized);
 
+		// Test with empty token
+		let res = post(&rocket_client, &base_url, to_string(&client).unwrap(), "");
+		assert_eq!(res.status(), Status::Unauthorized);
+
 		let token = get_token_admin(&rocket_client);
 		// Create new client
-		let res = rocket_client
-			.post("/client")
-			.body(to_string(&client).unwrap())
-			.add_auth_header(token)
-			.dispatch();
+		let res = post(
+			&rocket_client,
+			&base_url,
+			to_string(&client).unwrap(),
+			token,
+		);
 		let inserted_client = res.into_json::<Client>().unwrap();
 		assert_eq!(inserted_client, client);
 		let client_id = inserted_client.id;
 
 		// Check duplicate client insert
-		let res = rocket_client
-			.post("/client")
-			.body(to_string(&client).unwrap())
-			.add_auth_header(token)
-			.dispatch();
+		let res = post(
+			&rocket_client,
+			&base_url,
+			to_string(&client).unwrap(),
+			token,
+		);
 		assert_eq!(res.status(), Status::BadRequest);
 		assert_eq!(
 			res.into_string(),
@@ -166,39 +183,36 @@ mod test {
 			name: Some(new_company_name.clone()),
 			..Default::default()
 		};
-		let res = rocket_client
-			.patch(format!("/client/{client_id}"))
-			.body(to_string(&update_client).expect("Could not serialize UpdateClient"))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/{client_id}");
+		let res = patch(
+			&rocket_client,
+			&url,
+			to_string(&update_client).unwrap(),
+			token,
+		);
 		assert_eq!(res.status(), Status::Ok);
 		let updated_client = res.into_json::<Client>().unwrap();
 		assert_eq!(updated_client.name, new_company_name);
 		assert_ne!(updated_client, inserted_client);
 
 		// Get client
-		let res = rocket_client
-			.get(format!("/client/{client_id}"))
-			.add_auth_header(token)
-			.dispatch();
+		let res = get(&rocket_client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let res = res.into_json::<Client>().unwrap();
 		assert_eq!(res, updated_client);
 
 		// Test inserting as normal user
 		let user_token = get_token_user(&rocket_client);
-		let res = rocket_client
-			.post("/client")
-			.body(to_string(&client).unwrap())
-			.add_auth_header(user_token)
-			.dispatch();
+		let res = post(
+			&rocket_client,
+			&base_url,
+			to_string(&client).unwrap(),
+			user_token,
+		);
 		assert_eq!(res.status(), Status::Forbidden);
 
 		// delete client
-		let res = rocket_client
-			.delete(format!("/client/{client_id}"))
-			.add_auth_header(token)
-			.dispatch();
+		let res = delete(&rocket_client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 	}
 
@@ -206,16 +220,18 @@ mod test {
 	fn clients() {
 		let rocket_client = RocketClient::tracked(rocket()).unwrap();
 		let token = get_token_admin(&rocket_client);
+		let base_url = String::from("/client");
 
 		let mut client_list: Vec<Client> = Vec::new();
 		// insert multiple clients
 		for _ in 0..10 {
 			let client = generate_client();
-			let res = rocket_client
-				.post("/client")
-				.body(to_string(&client).unwrap())
-				.add_auth_header(token)
-				.dispatch();
+			let res = post(
+				&rocket_client,
+				&base_url,
+				to_string(&client).unwrap(),
+				token,
+			);
 			if res.status() != Status::Ok {
 				dbg!(res.into_string());
 				panic!();
@@ -223,28 +239,22 @@ mod test {
 			client_list.push(res.into_json::<Client>().unwrap());
 		}
 
-		let res = rocket_client
-			.get(format!("/client/{}", client_list[0].id))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/{}", client_list[0].id);
+		let res = get(&rocket_client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		assert_eq!(res.into_json::<Client>().unwrap(), client_list[0]);
 
 		// get first page of users with page_size 5
-		let res = rocket_client
-			.get("/client/page/5/0")
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/0");
+		let res = get(&rocket_client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let pagination = res.into_json::<PaginationResult<Client>>().unwrap();
 		assert_eq!(pagination.page, 0);
 		assert_eq!(pagination.page_size, 5);
 
 		// get last page of users with page_size 5 with number
-		let res = rocket_client
-			.get(format!("/client/page/5/{}", pagination.num_pages - 1))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/{}", pagination.num_pages - 1);
+		let res = get(&rocket_client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let pagination = res.into_json::<PaginationResult<Client>>().unwrap();
 		// the last page contains 5 OR LESS items
@@ -256,20 +266,16 @@ mod test {
 		// some race conditions could arrise here, but in prod it doesn't matter
 		assert_eq!(pagination.items, client_list[last_page_items..]);
 
-		let res = rocket_client
-			.get("/client/page/5/last")
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/last");
+		let res = get(&rocket_client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let last_page = res.into_json::<PaginationResult<Client>>().unwrap();
 		assert_eq!(last_page, pagination);
 
 		// delete all clients
 		for client in client_list {
-			let res = rocket_client
-				.delete(format!("/client/{}", client.id))
-				.add_auth_header(token)
-				.dispatch();
+			let url = format!("{base_url}/{}", client.id);
+			let res = delete(&rocket_client, &url, token);
 			assert_eq!(res.status(), Status::Ok);
 		}
 	}

@@ -4,10 +4,7 @@ use rocket::local::blocking::{
 	LocalResponse,
 };
 
-use crate::{
-	rocket,
-	test::token::AuthHeader,
-};
+use crate::test::token::AuthHeader;
 
 fn setup<'b>(req: LocalRequest<'b>, item: Option<String>, token: &'b str) -> LocalResponse<'b> {
 	let req = req.add_auth_header(token);
@@ -18,28 +15,38 @@ fn setup<'b>(req: LocalRequest<'b>, item: Option<String>, token: &'b str) -> Loc
 	}
 }
 
-pub fn delete<'b>(client: &'b Client, path: &'b str, token: &'b str) -> LocalResponse<'b> {
-	setup(client.delete(path), None, token)
+pub fn delete<'b>(client: &'b Client, uri: &'b str, token: &'b str) -> LocalResponse<'b> {
+	setup(client.delete(uri), None, token)
 }
 
-pub fn get<'b>(client: &'b Client, path: &'b str, token: &'b str) -> LocalResponse<'b> {
-	setup(client.get(path), None, token)
+pub fn get<'b>(client: &'b Client, uri: &'b str, token: &'b str) -> LocalResponse<'b> {
+	setup(client.get(uri), None, token)
 }
 
 pub fn post<'b>(
 	client: &'b Client,
-	path: &'b str,
+	uri: &'b str,
 	item: String,
 	token: &'b str,
 ) -> LocalResponse<'b> {
-	setup(client.post(path), Some(item), token)
+	setup(client.post(uri), Some(item), token)
 }
 
+#[allow(dead_code)]
 pub fn put<'b>(
 	client: &'b Client,
-	path: &'b str,
+	uri: &'b str,
 	item: String,
 	token: &'b str,
 ) -> LocalResponse<'b> {
-	setup(client.put(path), Some(item), token)
+	setup(client.put(uri), Some(item), token)
+}
+
+pub fn patch<'b>(
+	client: &'b Client,
+	uri: &'b str,
+	item: String,
+	token: &'b str,
+) -> LocalResponse<'b> {
+	setup(client.patch(uri), Some(item), token)
 }

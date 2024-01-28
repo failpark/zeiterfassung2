@@ -1,5 +1,10 @@
 use rocket::{
+	delete,
 	fairing::AdHoc,
+	get,
+	patch,
+	post,
+	routes,
 	serde::json::Json,
 };
 use rocket_db_pools::Connection;
@@ -117,14 +122,17 @@ mod test {
 		},
 		rocket,
 		test::{
-			create_client,
-			create_project,
 			generate_client,
 			generate_project,
+			methods::{
+				delete,
+				get,
+				patch,
+				post,
+			},
 			token::{
 				get_token_admin,
 				get_token_user,
-				AuthHeader,
 			},
 		},
 	};
@@ -136,19 +144,22 @@ mod test {
 		let token = get_token_admin(&client);
 		// Create new client for project
 		let project_client = generate_client();
-		let res = create_client(&client, &project_client, token);
+		let res = post(
+			&client,
+			"/client",
+			to_string(&project_client).unwrap(),
+			token,
+		);
 		let project_client = res.into_json::<Client>().unwrap();
 		project.client_id = project_client.id;
+		let base_url = String::from("/project");
 
 		// Test unauthorized
-		let res = client
-			.post("/project")
-			.body(to_string(&project).unwrap())
-			.dispatch();
+		let res = post(&client, &base_url, to_string(&project).unwrap(), "");
 		assert_eq!(res.status(), Status::Unauthorized);
 
 		// Create new project
-		let res = create_project(&client, &project, token);
+		let res = post(&client, &base_url, to_string(&project).unwrap(), token);
 		let inserted_project = res.into_json::<Project>().unwrap();
 		assert_eq!(inserted_project, project);
 		let project_id = inserted_project.id;
@@ -159,39 +170,26 @@ mod test {
 			name: Some(new_project_name.clone()),
 			..Default::default()
 		};
-		let res = client
-			.patch(format!("/project/{project_id}"))
-			.body(to_string(&update_project).expect("Could not serialize UpdateProject"))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/{}", project_id);
+		let res = patch(&client, &url, to_string(&update_project).unwrap(), token);
 		assert_eq!(res.status(), Status::Ok);
 		let updated_project = res.into_json::<Project>().unwrap();
 		assert_eq!(updated_project.name, new_project_name);
 		assert_ne!(updated_project, inserted_project);
 
 		// Get project
-		let res = client
-			.get(format!("/project/{project_id}"))
-			.add_auth_header(token)
-			.dispatch();
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let res = res.into_json::<Project>().unwrap();
 		assert_eq!(res, updated_project);
 
 		// Test inserting as normal user
 		let user_token = get_token_user(&client);
-		let res = client
-			.post("/project")
-			.body(to_string(&project).unwrap())
-			.add_auth_header(user_token)
-			.dispatch();
+		let res = post(&client, &base_url, to_string(&project).unwrap(), user_token);
 		assert_eq!(res.status(), Status::Forbidden);
 
 		// delete project
-		let res = client
-			.delete(format!("/project/{project_id}"))
-			.add_auth_header(token)
-			.dispatch();
+		let res = delete(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 	}
 
@@ -199,10 +197,16 @@ mod test {
 	fn projects() {
 		let client = LocalClient::tracked(rocket()).unwrap();
 		let token = get_token_admin(&client);
+		let base_url = String::from("/project");
 
 		// Create new client for project
 		let project_client = generate_client();
-		let res = create_client(&client, &project_client, token);
+		let res = post(
+			&client,
+			"/client",
+			to_string(&project_client).unwrap(),
+			token,
+		);
 		let project_client = res.into_json::<Client>().unwrap();
 
 		let mut project_list: Vec<Project> = Vec::new();
@@ -210,11 +214,7 @@ mod test {
 		for _ in 0..10 {
 			let mut project = generate_project();
 			project.client_id = project_client.id;
-			let res = client
-				.post("/project")
-				.body(to_string(&project).unwrap())
-				.add_auth_header(token)
-				.dispatch();
+			let res = post(&client, &base_url, to_string(&project).unwrap(), token);
 			if res.status() != Status::Ok {
 				dbg!(res.into_string());
 				panic!();
@@ -222,28 +222,22 @@ mod test {
 			project_list.push(res.into_json::<Project>().unwrap());
 		}
 
-		let res = client
-			.get(format!("/project/{}", project_list[0].id))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/{}", project_list[0].id);
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		assert_eq!(res.into_json::<Project>().unwrap(), project_list[0]);
 
 		// get first page of users with page_size 5
-		let res = client
-			.get("/project/page/5/0")
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/0");
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let pagination = res.into_json::<PaginationResult<Project>>().unwrap();
 		assert_eq!(pagination.page, 0);
 		assert_eq!(pagination.page_size, 5);
 
 		// get last page of users with page_size 5 with number
-		let res = client
-			.get(format!("/project/page/5/{}", pagination.num_pages - 1))
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/{}", pagination.num_pages - 1);
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let pagination = res.into_json::<PaginationResult<Project>>().unwrap();
 		// the last page contains 5 OR LESS items
@@ -255,20 +249,16 @@ mod test {
 		// some race conditions could arrise here, but in prod it doesn't matter
 		assert_eq!(pagination.items, project_list[last_page_items..]);
 
-		let res = client
-			.get("/project/page/5/last")
-			.add_auth_header(token)
-			.dispatch();
+		let url = format!("{base_url}/page/5/last");
+		let res = get(&client, &url, token);
 		assert_eq!(res.status(), Status::Ok);
 		let last_page = res.into_json::<PaginationResult<Project>>().unwrap();
 		assert_eq!(last_page, pagination);
 
 		// delete all projects
 		for project in project_list {
-			let res = client
-				.delete(format!("/project/{}", project.id))
-				.add_auth_header(token)
-				.dispatch();
+			let url = format!("{base_url}/{}", project.id);
+			let res = delete(&client, &url, token);
 			assert_eq!(res.status(), Status::Ok);
 		}
 	}

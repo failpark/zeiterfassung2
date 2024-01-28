@@ -1,7 +1,9 @@
-#[macro_use]
-extern crate rocket;
+// #[macro_use]
+// extern crate rocket;
 use rocket::{
+	catchers,
 	fairing::AdHoc,
+	launch,
 	Rocket,
 };
 use rocket_db_pools::Database;
@@ -23,16 +25,18 @@ pub use error::{
 };
 use rocket_cors::CorsOptions;
 mod catchers;
-// use tracing_subscriber::FmtSubscriber;
-// use tracing::subscriber::set_global_default;
-// use tracing::Level;
+use tracing::{
+	subscriber::set_global_default,
+	Level,
+};
+use tracing_subscriber::FmtSubscriber;
 
 #[launch]
 fn rocket() -> _ {
-	// let subscriber = FmtSubscriber::builder()
-	// .with_max_level(Level::TRACE)
-	// .finish();
-	// set_global_default(subscriber).expect("setting default subscriber failed");
+	let subscriber = FmtSubscriber::builder()
+		.with_max_level(Level::ERROR)
+		.finish();
+	set_global_default(subscriber).expect("setting default subscriber failed");
 
 	let allowed_origins = rocket_cors::AllowedOrigins::some_exact(&["http://localhost:5173"]);
 	Rocket::build()

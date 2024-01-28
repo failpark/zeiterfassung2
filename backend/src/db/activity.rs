@@ -12,6 +12,7 @@ use rocket_db_pools::{
 	},
 	Connection,
 };
+use tracing::trace;
 
 use super::{
 	last_insert_id,

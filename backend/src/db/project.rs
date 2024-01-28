@@ -11,6 +11,7 @@ use rocket_db_pools::{
 	},
 	Connection,
 };
+use tracing::trace;
 
 use super::{
 	client::Client,
@@ -171,11 +172,11 @@ impl Project {
 			.await
 	}
 	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
-		use crate::schema::client::dsl::*;
+		use crate::schema::project::dsl::*;
 
-		trace!("Getting last page of client table for page_size {page_size}");
+		trace!("Getting last page of project table for page_size {page_size}");
 
-		let total_items: i64 = client.count().get_result(db).await?;
+		let total_items: i64 = project.count().get_result(db).await?;
 		// index starts at 0
 		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
 	}

@@ -6,6 +6,7 @@ use diesel::prelude::*;
 use diesel::query_dsl::methods::SelectDsl;
 use diesel::dsl::CountStar;
 use rocket_db_pools::diesel::RunQueryDsl;
+use tracing::trace;
 
 async fn last_page<T: Table>(db: &mut Connection<DB>, page_size: i64, table: T) -> QueryResult<i64>
 where T: SelectDsl<CountStar>,

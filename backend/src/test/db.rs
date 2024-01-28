@@ -76,7 +76,7 @@ pub fn create_admin(client: &Client, password: Option<String>) -> anyhow::Result
 		String::from("Admin_01!")
 	};
 	admin.sys_role = "admin".to_string();
-	admin.hash = Tokenizer::hash_password(admin_password.as_bytes()).unwrap();
+	admin.password = Tokenizer::hash_password(admin_password.as_bytes()).unwrap();
 	let admin_email = admin.email.clone();
 	create_user(client, admin).expect("Creating admin failed");
 	Ok([admin_email, admin_password])

@@ -5,6 +5,7 @@ use rocket_db_pools::{
 	},
 	Connection,
 };
+use tracing::trace;
 
 use super::{
 	activity::Activity,

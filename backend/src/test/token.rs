@@ -55,8 +55,8 @@ pub fn get_token_user(client: &Client) -> &'static str {
 	static TOKEN: OnceLock<String> = OnceLock::new();
 	TOKEN.get_or_init(|| {
 		let mut user = generate_user();
-		let password = user.hash;
-		user.hash = Tokenizer::hash_password(password.as_bytes()).unwrap();
+		let password = user.password;
+		user.password = Tokenizer::hash_password(password.as_bytes()).unwrap();
 		create_user(client, user.clone()).expect("Creating test user failed");
 		get_token(client, &user.email, &password)
 	})

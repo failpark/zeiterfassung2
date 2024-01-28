@@ -13,6 +13,7 @@ use serde::{
 	Deserialize,
 	Serialize,
 };
+use tracing::trace;
 
 pub mod activity;
 pub mod client;
