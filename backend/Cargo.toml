@@ -19,7 +19,8 @@ rocket_db_pools = { version = "0.1.0", features = ["diesel_mysql"] }
 serde = "1.0.193"
 thiserror = "1.0.50"
 tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "registry", "json"] }
 typeshare = "1.0.1"
 
 [dev-dependencies]

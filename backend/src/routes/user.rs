@@ -247,8 +247,11 @@ mod test {
 			.unwrap();
 		// reverse to get items from the bottom
 		let last_page_items = 10 - last_page_items;
-		// some race conditions could arrise here, but in prod it doesn't matter
-		assert_eq!(pagination.items, user_list[last_page_items..]);
+		assert_eq!(
+			pagination.items,
+			user_list[last_page_items..],
+			"race conditions may occur here, but in prod it doesn't matter"
+		);
 
 		let url = format!("{base_url}/page/5/last");
 		let res = get(&client, &url, user_token);
