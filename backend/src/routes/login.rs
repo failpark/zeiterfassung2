@@ -55,6 +55,7 @@ impl LoginResponder {
 }
 
 #[derive(Deserialize, Serialize)]
+#[typeshare::typeshare]
 pub struct Login<'r> {
 	email: &'r str,
 	password: &'r str,

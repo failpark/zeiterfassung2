@@ -151,6 +151,7 @@ mod test {
 		},
 	};
 
+	#[tracing_test::traced_test]
 	#[test]
 	fn user_single() {
 		let client = Client::tracked(rocket()).unwrap();
@@ -210,10 +211,12 @@ mod test {
 		assert_eq!(res.status(), Status::Ok);
 	}
 
+	#[tracing_test::traced_test]
 	#[test]
 	fn user_multiple() {
 		let client = Client::tracked(rocket()).unwrap();
 		let token = get_token_admin(&client);
+		let user_token = get_token_user(&client);
 		let base_url = String::from("/user");
 		let mut user_list = Vec::new();
 		for _ in 0..10 {
@@ -222,7 +225,6 @@ mod test {
 			assert_eq!(res.status(), Status::Ok);
 			user_list.push(res.into_json::<User>().unwrap());
 		}
-		let user_token = get_token_user(&client);
 
 		// get single user from id
 		let url = format!("{base_url}/{}", user_list[0].id);
@@ -266,7 +268,7 @@ mod test {
 		for user in user_list {
 			let url = format!("{base_url}/{}", user.id);
 			let res = delete(&client, &url, user_token);
-			assert_eq!(res.status(), Status::Unauthorized);
+			assert_eq!(res.status(), Status::Forbidden);
 			let res = delete(&client, &url, token);
 			assert_eq!(res.status(), Status::Ok);
 		}

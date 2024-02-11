@@ -171,6 +171,7 @@ impl Project {
 			.execute(db)
 			.await
 	}
+
 	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
 		use crate::schema::project::dsl::*;
 

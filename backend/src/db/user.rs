@@ -187,15 +187,12 @@ impl User {
 		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = user.count().get_result(db).await?;
-		let items: Vec<User> = if page == 0 {
-			user.limit(page_size).load::<Self>(db).await?
-		} else {
-			user
+		let items = user
 				.limit(page_size)
 				.offset(page * page_size)
 				.load::<Self>(db)
-				.await?
-		};
+				.await?;
+
 		Ok(PaginationResult {
 			items,
 			total_items,
@@ -204,16 +201,6 @@ impl User {
 			/* ceiling division of integers */
 			num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
 		})
-	}
-
-	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
-		use crate::schema::user::dsl::*;
-
-		trace!("Getting last page of user table for page_size {page_size}");
-
-		let total_items: i64 = user.count().get_result(db).await?;
-		// index starts at 0
-		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
 	}
 
 	/// Update a row in `user`, identified by the primary key with [`UpdateUser`]
@@ -245,6 +232,16 @@ impl User {
 		diesel::delete(user.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+
+	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+		use crate::schema::user::dsl::*;
+
+		trace!("Getting last page of user table for page_size {page_size}");
+
+		let total_items: i64 = user.count().get_result(db).await?;
+		// index starts at 0
+		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
 	}
 }
 
