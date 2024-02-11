@@ -108,6 +108,7 @@ mod test {
 		},
 	};
 
+	#[tracing_test::traced_test]
 	#[test]
 	fn login() {
 		let client = Client::tracked(rocket()).unwrap();

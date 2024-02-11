@@ -132,8 +132,9 @@ mod test {
 		},
 	};
 
+	#[tracing_test::traced_test]
 	#[test]
-	fn activity() {
+	fn activity_single() {
 		let client = Client::tracked(rocket()).unwrap();
 		let activity = generate_activity();
 		let base_url = String::from("/activity");
@@ -203,8 +204,9 @@ mod test {
 		assert_eq!(res.status(), Status::Ok);
 	}
 
+	#[tracing_test::traced_test]
 	#[test]
-	fn activities() {
+	fn activity_multiple() {
 		let client = Client::tracked(rocket()).unwrap();
 		let token = get_token_admin(&client);
 		let base_url = String::from("/activity");

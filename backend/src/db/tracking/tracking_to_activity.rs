@@ -7,13 +7,13 @@ use rocket_db_pools::{
 };
 use tracing::trace;
 
-use super::{
-	activity::Activity,
-	last_insert_id,
-	tracking::Tracking,
-	PaginationResult,
-};
+use super::tracking::Tracking;
 use crate::{
+	db::{
+		activity::Activity,
+		last_insert_id,
+		PaginationResult,
+	},
 	schema::*,
 	DB,
 };
@@ -163,5 +163,48 @@ impl TrackingToActivity {
 		diesel::delete(tracking_to_activity.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+
+	pub async fn delete_by_tracking_id(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
+		use crate::schema::tracking_to_activity::dsl::*;
+
+		trace!(
+			"Deleting from tracking_to_activity table with tracking_id: {}",
+			param_id
+		);
+		diesel::delete(tracking_to_activity.filter(tracking_id.eq(param_id)))
+			.execute(db)
+			.await
+	}
+
+	pub async fn from_tracking(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Vec<Self>> {
+		use crate::schema::tracking_to_activity::dsl::*;
+
+		trace!("Reading from tracking_to_activity table: {:?}", param_id);
+		tracking_to_activity
+			.filter(tracking_id.eq(param_id))
+			.load::<Self>(db)
+			.await
+	}
+
+	pub async fn get_activity_ids(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Vec<i32>> {
+		let activities = Self::from_tracking(db, param_id).await?;
+		let mut result = Vec::new();
+		for i in activities {
+			result.push(i.activity_id);
+		}
+		Ok(result)
+	}
+
+	pub async fn get_activities(
+		db: &mut Connection<DB>,
+		param_id: i32,
+	) -> QueryResult<Vec<Activity>> {
+		let activities = Self::from_tracking(db, param_id).await?;
+		let mut result = Vec::new();
+		for i in activities {
+			result.push(Activity::read(db, i.activity_id).await?);
+		}
+		Ok(result)
 	}
 }

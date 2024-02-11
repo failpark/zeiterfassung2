@@ -21,12 +21,14 @@ thiserror = "1.0.50"
 tracing = "0.1.40"
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "registry", "json"] }
+tracing-test = "0.2.4"
 typeshare = "1.0.1"
 
 [dev-dependencies]
-fake = { version = "2.9.1", features = ["derive"]}
+fake = { version = "2.9.1", features = ["derive", "chrono"]}
 pretty_assertions = "1.4.0"
 rand = "0.8.5"
 test-case = "3.3.1"
 diesel = { version = "2.1.4", features = ["chrono", "mysql", "r2d2"] }
 paste = "1.0.14"
+itertools = "0.12.1"

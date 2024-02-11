@@ -7,14 +7,14 @@ use rocket_db_pools::{
 };
 use tracing::trace;
 
-use super::{
-	client::Client,
-	last_insert_id,
-	project::Project,
-	user::User,
-	PaginationResult,
-};
 use crate::{
+	db::{
+		client::Client,
+		last_insert_id,
+		project::Project,
+		user::User,
+		PaginationResult,
+	},
 	schema::*,
 	DB,
 };
@@ -32,6 +32,7 @@ use crate::{
 	Identifiable,
 )]
 #[diesel(table_name=tracking, primary_key(id), belongs_to(Client, foreign_key=client_id) , belongs_to(Project, foreign_key=project_id) , belongs_to(User, foreign_key=user_id))]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct Tracking {
 	/// Field representing column `id`
 	pub id: i32,
@@ -110,7 +111,7 @@ pub struct UpdateTracking {
 	/// Field representing column `billed`
 	pub billed: Option<f32>,
 	/// Field representing column `description`
-	pub description: Option<Option<String>>,
+	pub description: Option<String>,
 	/// Field representing column `created_at`
 	pub created_at: Option<chrono::NaiveDateTime>,
 	/// Field representing column `updated_at`
@@ -210,5 +211,31 @@ impl Tracking {
 		diesel::delete(tracking.filter(id.eq(param_id)))
 			.execute(db)
 			.await
+	}
+
+	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+		use crate::schema::tracking::dsl::*;
+
+		trace!("Getting last page of project table for page_size {page_size}");
+
+		let total_items: i64 = tracking.count().get_result(db).await?;
+		// index starts at 0
+		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
+	}
+}
+
+#[cfg(test)]
+impl PartialEq<CreateTracking> for Tracking {
+	fn eq(&self, other: &CreateTracking) -> bool {
+		self.client_id == other.client_id
+			&& self.user_id == other.user_id
+			&& self.project_id == other.project_id
+			&& self.date == other.date
+			&& self.begin == other.begin
+			&& self.end == other.end
+			&& self.pause == other.pause
+			&& self.performed == other.performed
+			&& self.billed == other.billed
+			&& self.description == other.description
 	}
 }

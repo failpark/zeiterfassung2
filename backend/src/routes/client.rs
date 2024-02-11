@@ -130,8 +130,9 @@ mod test {
 		},
 	};
 
+	#[tracing_test::traced_test]
 	#[test]
-	fn client() {
+	fn client_single() {
 		let rocket_client = RocketClient::tracked(rocket()).unwrap();
 		let client = generate_client();
 		let base_url = String::from("/client");
@@ -216,8 +217,9 @@ mod test {
 		assert_eq!(res.status(), Status::Ok);
 	}
 
+	#[tracing_test::traced_test]
 	#[test]
-	fn clients() {
+	fn client_multiple() {
 		let rocket_client = RocketClient::tracked(rocket()).unwrap();
 		let token = get_token_admin(&rocket_client);
 		let base_url = String::from("/client");

@@ -149,7 +149,7 @@ mod test {
 	};
 
 	#[test]
-	fn user() {
+	fn user_single() {
 		let client = Client::tracked(rocket()).unwrap();
 		let mut user = generate_user();
 		let base_url = String::from("/user");
@@ -208,7 +208,7 @@ mod test {
 	}
 
 	#[test]
-	fn users() {
+	fn user_multiple() {
 		let client = Client::tracked(rocket()).unwrap();
 		let token = get_token_admin(&client);
 		let base_url = String::from("/user");

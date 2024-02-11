@@ -137,8 +137,9 @@ mod test {
 		},
 	};
 
+	#[tracing_test::traced_test]
 	#[test]
-	fn project() {
+	fn project_single() {
 		let client = LocalClient::tracked(rocket()).unwrap();
 		let mut project = generate_project();
 		let token = get_token_admin(&client);
@@ -193,8 +194,9 @@ mod test {
 		assert_eq!(res.status(), Status::Ok);
 	}
 
+	#[tracing_test::traced_test]
 	#[test]
-	fn projects() {
+	fn project_multiple() {
 		let client = LocalClient::tracked(rocket()).unwrap();
 		let token = get_token_admin(&client);
 		let base_url = String::from("/project");
