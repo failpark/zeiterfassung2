@@ -45,11 +45,14 @@ async fn create(
 async fn update(
 	user: User,
 	mut db: Connection<DB>,
-	update_user: Json<UpdateUser>,
+	mut update_user: Json<UpdateUser>,
 	id: i32,
 ) -> Result<Json<User>, Error> {
 	if user.id != id && user.sys_role != "admin" {
 		return Err(Error::ForbiddenAccess);
+	}
+	if let Some(password) = &update_user.password {
+		update_user.password = Some(Tokenizer::hash_password(password.as_bytes())?);
 	}
 	let user = User::update(&mut db, id, &update_user).await?;
 	Ok(Json(user))

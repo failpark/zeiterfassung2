@@ -20,8 +20,9 @@ pub fn default_catcher(status: Status, request: &Request) -> String {
 	let error = ErrorJson::new(status.code, status.reason_lossy());
 	let json = rocket::serde::json::to_string(&error).expect("Could not serialize json");
 	let debug_msg = format!(
-		"Default Catcher with: {:?} for request_uri: {} and method: {}",
-		json,
+		"Default Catcher: status: {} with reason: {} for request_uri: {} and method: {}",
+		status.code,
+		status.reason_lossy(),
 		request.uri(),
 		request.method()
 	);
@@ -33,7 +34,14 @@ pub fn default_catcher(status: Status, request: &Request) -> String {
 			info!(debug_msg);
 		}
 		StatusClass::ClientError | StatusClass::ServerError | StatusClass::Unknown => {
-			error!(debug_msg);
+			match status.code {
+				401 => {
+					info!(debug_msg);
+				}
+				_ => {
+					error!(debug_msg);
+				}
+			}
 		}
 	}
 
