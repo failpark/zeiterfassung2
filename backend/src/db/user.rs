@@ -188,10 +188,10 @@ impl User {
 		let page_size = if page_size < 1 { 1 } else { page_size };
 		let total_items = user.count().get_result(db).await?;
 		let items = user
-				.limit(page_size)
-				.offset(page * page_size)
-				.load::<Self>(db)
-				.await?;
+			.limit(page_size)
+			.offset(page * page_size)
+			.load::<Self>(db)
+			.await?;
 
 		Ok(PaginationResult {
 			items,
