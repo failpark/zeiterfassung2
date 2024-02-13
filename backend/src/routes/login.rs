@@ -47,7 +47,7 @@ impl<'r> ResponderImpl<'r, 'static> for Token {
 
 impl LoginResponder {
 	pub fn new(inner: String) -> Self {
-		trace!("LoginResponder::new({:?})", inner);
+		trace!("LoginResponder::new(**REDACTED TOKEN**)");
 		Self {
 			inner: Token { token: inner },
 		}
