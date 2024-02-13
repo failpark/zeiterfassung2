@@ -3,6 +3,7 @@ name = "zeiterfassung-backend"
 version = "0.0.2"
 edition = "2021"
 repository = "https://github.com/Failpark/zeiterfassung2"
+default-run = "backend"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

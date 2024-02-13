@@ -13,7 +13,7 @@ mod routes;
 mod schema;
 #[cfg(test)]
 mod test;
-mod tracing;
+pub mod tracing;
 pub use db::{
 	user::User,
 	DB,
@@ -24,7 +24,7 @@ pub use error::{
 };
 use rocket_cors::CorsOptions;
 
-fn rocket() -> Rocket<rocket::Build> {
+pub fn rocket() -> Rocket<rocket::Build> {
 	let allowed_origins = rocket_cors::AllowedOrigins::some_exact(&["http://localhost:5173"]);
 	Rocket::build()
 		.attach(
@@ -48,11 +48,4 @@ fn rocket() -> Rocket<rocket::Build> {
 			0,
 		)))
 		.register("/", catchers![catchers::default_catcher])
-}
-
-#[rocket::main]
-async fn main() -> std::result::Result<(), rocket::Error> {
-	let _guard = tracing::init();
-	let _rocket = rocket().ignite().await?.launch().await?;
-	Ok(())
 }
