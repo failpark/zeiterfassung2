@@ -2,8 +2,11 @@
 _default:
 	@just --list
 
-fmt:
-	
+fmt *args:
+	npx @biomejs/biome format . {{ args }}
+
+lint *args:
+	npx @biomejs/biome lint . {{ args }}
 
 diff *args:
 	git diff {{ args }} ':!package-lock.json'

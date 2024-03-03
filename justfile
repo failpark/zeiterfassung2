@@ -35,3 +35,13 @@ xh *args:
 # use difftastic
 difftastic *args:
 	GIT_EXTERNAL_DIFF=difft git diff {{ args }}
+
+lint:
+	cd frontend && just lint
+
+fmt-all *args:
+	just fmt {{ args }}
+	cd frontend && just fmt {{ args }}
+
+fmt-frontend *args:
+	cd frontend && just fmt {{ args }}

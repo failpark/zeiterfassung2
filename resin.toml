@@ -1,5 +1,6 @@
 scopes = [
 	'dev',
 	'ci',
-	'test'
+	'test',
+	'format'
 ]
