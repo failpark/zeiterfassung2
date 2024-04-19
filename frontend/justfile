@@ -2,6 +2,9 @@
 _default:
 	@just --list
 
+shd +args:
+	npx shadcn-ui@latest add {{ args }}
+
 fmt *args:
 	npx @biomejs/biome format . {{ args }}
 

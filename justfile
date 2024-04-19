@@ -36,8 +36,8 @@ xh *args:
 difftastic *args:
 	GIT_EXTERNAL_DIFF=difft git diff {{ args }}
 
-lint:
-	cd frontend && just lint
+lint *args:
+	cd frontend && just lint {{ args }}
 
 fmt-all *args:
 	just fmt {{ args }}
