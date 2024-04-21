@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-	Link,
 	Outlet,
 	redirect,
 	createRootRouteWithContext,
@@ -19,6 +18,7 @@ const TanStackRouterDevtools =
 		  );
 
 import { useAuth, type AuthContext } from "../auth";
+import Nav from "@/components/tw/nav";
 
 interface MyRouterContext {
 	auth: AuthContext;
@@ -49,48 +49,19 @@ function RootComponent() {
 	});
 	const auth = useAuth();
 	return (
-		<>
-			<div className="p-2 flex gap-2 text-lg">
-				<Link
-					to="/"
-					activeProps={{
-						className: "font-bold",
-					}}
-					activeOptions={{ exact: true }}
-				>
-					Home
-				</Link>{" "}
-				{auth.isAuthenticated ? (
-					<Link
-						to={"/dashboard"}
-						activeProps={{
-							className: "font-bold",
-						}}
-					>
-						Dashboard
-					</Link>
-				) : (
-					<Link
-						to={"/login"}
-						activeProps={{
-							className: "font-bold",
-						}}
-						search={{ redirect: "/" }}
-					>
-						Login
-					</Link>
+		<div className="min-h-full">
+			{auth.isAuthenticated ? <Nav /> : ""}
+			<div className="py-10">
+				<Outlet />
+				{showRouteDevtools && (
+					<React.Suspense>
+						<TanStackRouterDevtools
+							position="bottom-right"
+							initialIsOpen={false}
+						/>
+					</React.Suspense>
 				)}
 			</div>
-			<hr />
-			<Outlet />
-			{showRouteDevtools && (
-				<React.Suspense>
-					<TanStackRouterDevtools
-						position="bottom-right"
-						initialIsOpen={false}
-					/>
-				</React.Suspense>
-			)}
-		</>
+		</div>
 	);
 }
