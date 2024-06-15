@@ -12,7 +12,6 @@ const user = {
 const navigation = [
 	{ name: "Home", href: "/", activeOptions: { exact: true } },
 	{ name: "Dashboard", href: "/dashboard" },
-	{ name: "Login", href: "/login" },
 ];
 const userNavigation = [
 	{ name: "Your Profile", href: "/profile" },

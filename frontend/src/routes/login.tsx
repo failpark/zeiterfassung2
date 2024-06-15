@@ -7,20 +7,22 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
+import { toast } from "sonner";
 
 import { useAuth } from "../auth";
+import AuthService from "@/services/auth.service";
 
 export const Route = createFileRoute("/login")({
 	validateSearch: z.object({
@@ -45,17 +47,6 @@ function LoginComponent() {
 
 	const search = routeApi.useSearch();
 
-	const handleLogin = (evt: React.FormEvent<HTMLFormElement>) => {
-		evt.preventDefault();
-		setIsSubmitting(true);
-
-		flushSync(() => {
-			auth.setUser(name);
-		});
-
-		navigate({ to: search.redirect });
-	};
-
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -64,8 +55,23 @@ function LoginComponent() {
 		},
 	});
 
+	if (!form.formState.isValid && form.formState.errors.email) {
+		toast.error(form.formState.errors.email.message);
+	}
+
 	function onSubmit(values: z.infer<typeof formSchema>) {
-		console.log(values);
+		setIsSubmitting(true);
+		AuthService.login(values.email, values.password).then(
+			() => {
+				setIsSubmitting(false);
+				auth.setUser(values.email);
+				navigate({ to: search.redirect });
+			},
+			error => {
+				toast.error(error);
+				setIsSubmitting(false);
+			}
+	);
 	}
 
 	return (
@@ -73,9 +79,9 @@ function LoginComponent() {
 			<div className="w-full max-w-sm space-y-10">
 				<div>
 					<img
-						className="mx-auto h-10 w-auto"
-						src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-						alt="Your Company"
+						className="mx-auto h-12 w-auto"
+						src="/vendamus-logo.svg"
+						alt="Vendamus"
 					/>
 					<h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
 						Sign in to your account
@@ -131,7 +137,7 @@ function LoginComponent() {
 								type="submit"
 								className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 							>
-								Sign in
+								{isSubmitting ? "Loading..." : "Login"}
 							</button>
 						</div>
 					</form>

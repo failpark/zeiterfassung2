@@ -30,11 +30,11 @@ nextest *args:
 
 # send requests without having to manually get the token
 xh *args:
-	xh ":8000{{args}}" -A bearer -a `xh POST :8000/login email='admin@localhost' password='admin' | jq -r .token`
+	xh ":8000{{args}}" -A bearer -a `xh POST :8000/login email='admin@localhost.de' password='admin' | jq -r .token`
 
 # use difftastic
 difftastic *args:
-	GIT_EXTERNAL_DIFF=difft git diff {{ args }}
+	GIT_EXTERNAL_DIFF=difft git diff {{ args }} ':!*lock*'
 
 lint *args:
 	cd frontend && just lint {{ args }}
@@ -45,3 +45,6 @@ fmt-all *args:
 
 fmt-frontend *args:
 	cd frontend && just fmt {{ args }}
+
+dev:
+	cd frontend && just dev

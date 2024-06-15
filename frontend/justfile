@@ -2,18 +2,26 @@
 _default:
 	@just --list
 
+# shadcn-ui cli
 shd +args:
 	npx shadcn-ui@latest add {{ args }}
 
+# biome format
 fmt *args:
 	npx @biomejs/biome format . {{ args }}
 
+# biome lint
 lint *args:
 	npx @biomejs/biome lint . {{ args }}
 
+# git diff but ignore package-lock.json
 diff *args:
 	git diff {{ args }} ':!package-lock.json'
 
-# use difftastic
+# use difftastic but ignore package-lock.json
 difftastic *args:
 	GIT_EXTERNAL_DIFF=difft git diff {{ args }} ':!package-lock.json'
+
+# run dev server
+dev:
+	npm run dev

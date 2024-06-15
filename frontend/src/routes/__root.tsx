@@ -15,10 +15,11 @@ const TanStackRouterDevtools =
 					// For Embedded Mode
 					// default: res.TanStackRouterDevtoolsPanel
 				})),
-		  );
+		);
 
 import { useAuth, type AuthContext } from "../auth";
 import Nav from "@/components/tw/nav";
+import { Toaster } from "sonner";
 
 interface MyRouterContext {
 	auth: AuthContext;
@@ -62,6 +63,7 @@ function RootComponent() {
 					</React.Suspense>
 				)}
 			</div>
+			<Toaster richColors={true} closeButton />
 		</div>
 	);
 }
