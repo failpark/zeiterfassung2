@@ -1,0 +1,63 @@
+Create a new React frontend in TypeScript for my time tracking application. This is a complex task that requires careful analysis of the existing backend codebase. Think hard about the architecture, data flow, and user experience before generating any code. Take time to understand the relationships between different entities and how they should be represented in the frontend.
+
+## Project Setup
+- Use Vite as the build system
+- Set up TypeScript configuration
+- Configure Tailwind CSS, along with TailwindUI and shadcn/ui components
+- Set up TanStack Router for routing
+- Implement a clean project structure with separate directories for:
+  - components/
+  - pages/
+  - hooks/
+  - api/
+  - utils/
+  - types/
+  - contexts/
+  - assets/
+
+## Authentication
+- Implement JWT authentication
+- Create a login page
+- Set up protected routes that redirect unauthenticated users to login
+- Store JWT token securely (localStorage or preferably httpOnly cookies)
+- Add automatic token refresh mechanism
+
+## Data Model & API Integration
+- Analyze the SQL migration files in the `migrations/` directory to understand:
+  - Table structures and relationships
+  - Column data types and constraints
+  - Foreign key relationships between entities
+- Create TypeScript interfaces that match the database schema
+- Create API client with appropriate error handling
+- The API endpoints can be found in `backend/src/routes/`
+- Parse route decorators like `#[get("/page/<page_size>/last", rank = 2)]` to understand API structure
+- Entity types can be found in corresponding files like `backend/src/db/activity.rs`
+
+## Main Features
+1. Login screen with username/password
+2. Dashboard with summary statistics
+3. Tables for viewing and managing:
+   - Customers
+   - Projects (linked to customers)
+   - Time entries (with filtering by date, project, activity)
+   - Activities
+
+## UI Components
+- Create reusable components using Tailwind and shadcn/ui
+- Implement responsive layouts for all screens
+- Include form components with validation
+- Build filterable and sortable data tables
+- Create modals for CRUD operations
+
+## Testing
+- Set up Vitest for unit testing
+- Add React Testing Library for component tests
+- Include basic test coverage for critical components
+
+## Additional Features
+- Error handling and user feedback
+- Loading states and skeletons
+- Dark/light mode toggle
+- Responsive design for mobile and desktop
+
+Please examine both the backend code structure (particularly the API routes in `backend/src/routes/` and data models in `backend/src/db/`) AND the SQL migration files in the `migrations/` directory to ensure proper data modeling and integration with the backend.
