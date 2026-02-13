@@ -119,58 +119,58 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| USER-01 | — | Pending |
-| USER-02 | — | Pending |
-| USER-03 | — | Pending |
-| USER-04 | — | Pending |
-| CLNT-01 | — | Pending |
-| CLNT-02 | — | Pending |
-| CLNT-03 | — | Pending |
-| CLNT-04 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| PROJ-03 | — | Pending |
-| PROJ-04 | — | Pending |
-| SUBP-01 | — | Pending |
-| SUBP-02 | — | Pending |
-| SUBP-03 | — | Pending |
-| SUBP-04 | — | Pending |
-| SUBP-05 | — | Pending |
-| ACTV-01 | — | Pending |
-| ACTV-02 | — | Pending |
-| ACTV-03 | — | Pending |
-| ACTV-04 | — | Pending |
-| TRCK-01 | — | Pending |
-| TRCK-02 | — | Pending |
-| TRCK-03 | — | Pending |
-| TRCK-04 | — | Pending |
-| TRCK-05 | — | Pending |
-| TRCK-06 | — | Pending |
-| TRCK-07 | — | Pending |
-| TRCK-08 | — | Pending |
-| TRCK-09 | — | Pending |
-| TRVL-01 | — | Pending |
-| TRVL-02 | — | Pending |
-| TRVL-03 | — | Pending |
-| TRVL-04 | — | Pending |
-| TRVL-05 | — | Pending |
-| INFR-01 | — | Pending |
-| INFR-02 | — | Pending |
-| INFR-03 | — | Pending |
-| INFR-04 | — | Pending |
-| INFR-05 | — | Pending |
-| INFR-06 | — | Pending |
-| INFR-07 | — | Pending |
+| AUTH-01 | Phase 3 | Pending |
+| AUTH-02 | Phase 3 | Pending |
+| AUTH-03 | Phase 3 | Pending |
+| AUTH-04 | Phase 3 | Pending |
+| USER-01 | Phase 4 | Pending |
+| USER-02 | Phase 4 | Pending |
+| USER-03 | Phase 4 | Pending |
+| USER-04 | Phase 4 | Pending |
+| CLNT-01 | Phase 5 | Pending |
+| CLNT-02 | Phase 5 | Pending |
+| CLNT-03 | Phase 5 | Pending |
+| CLNT-04 | Phase 5 | Pending |
+| PROJ-01 | Phase 5 | Pending |
+| PROJ-02 | Phase 5 | Pending |
+| PROJ-03 | Phase 5 | Pending |
+| PROJ-04 | Phase 5 | Pending |
+| SUBP-01 | Phase 7 | Pending |
+| SUBP-02 | Phase 7 | Pending |
+| SUBP-03 | Phase 7 | Pending |
+| SUBP-04 | Phase 7 | Pending |
+| SUBP-05 | Phase 7 | Pending |
+| ACTV-01 | Phase 5 | Pending |
+| ACTV-02 | Phase 5 | Pending |
+| ACTV-03 | Phase 5 | Pending |
+| ACTV-04 | Phase 5 | Pending |
+| TRCK-01 | Phase 6 | Pending |
+| TRCK-02 | Phase 6 | Pending |
+| TRCK-03 | Phase 6 | Pending |
+| TRCK-04 | Phase 6 | Pending |
+| TRCK-05 | Phase 6 | Pending |
+| TRCK-06 | Phase 6 | Pending |
+| TRCK-07 | Phase 6 | Pending |
+| TRCK-08 | Phase 6 | Pending |
+| TRCK-09 | Phase 6 | Pending |
+| TRVL-01 | Phase 8 | Pending |
+| TRVL-02 | Phase 8 | Pending |
+| TRVL-03 | Phase 8 | Pending |
+| TRVL-04 | Phase 8 | Pending |
+| TRVL-05 | Phase 8 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 2 | Pending |
+| INFR-03 | Phase 1 | Pending |
+| INFR-04 | Phase 1 | Pending |
+| INFR-05 | Phase 2 | Pending |
+| INFR-06 | Phase 1 | Pending |
+| INFR-07 | Phase 9 | Pending |
 
 **Coverage:**
-- v1 requirements: 42 total
-- Mapped to phases: 0
-- Unmapped: 42
+- v1 requirements: 46 total
+- Mapped to phases: 46
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-13*
-*Last updated: 2026-02-13 after initial definition*
+*Last updated: 2026-02-13 after roadmap creation — traceability complete*
