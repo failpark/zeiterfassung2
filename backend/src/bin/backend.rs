@@ -7,8 +7,7 @@ use zeiterfassung_backend::{
 
 #[tokio::main]
 async fn main() {
-	let config = zeiterfassung_backend::config::load_config()
-		.expect("Failed to load configuration");
+	let config = zeiterfassung_backend::config::load_config().expect("Failed to load configuration");
 
 	zeiterfassung_backend::tracing::init_tracing(config.environment != "development");
 

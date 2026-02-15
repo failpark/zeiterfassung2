@@ -1,4 +1,5 @@
 pub mod health;
+pub mod ping;
 
 // TODO: Port to Axum in Phase 3+
 // pub mod activity;

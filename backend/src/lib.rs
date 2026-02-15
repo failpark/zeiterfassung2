@@ -28,6 +28,7 @@ use tower_http::{
 
 pub mod config;
 pub mod error;
+mod middleware;
 mod routes;
 pub mod state;
 pub mod tracing;
@@ -105,8 +106,13 @@ pub fn app(state: AppState) -> Router {
 
 	let public = Router::new().route("/health", get(routes::health::health));
 
+	let protected = Router::new()
+		.route("/api/ping", get(routes::ping::ping))
+		.route_layer(axum::middleware::from_fn(middleware::auth::require_auth));
+
 	Router::new()
 		.merge(public)
+		.merge(protected)
 		.layer(middleware_stack)
 		.with_state(state)
 }

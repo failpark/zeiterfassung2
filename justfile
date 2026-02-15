@@ -1,3 +1,4 @@
+alias b := build
 alias c := check
 alias ct := compile-test
 alias r := run
@@ -6,6 +7,9 @@ alias diff := difftastic
 
 _default:
 	@just --list
+
+build *args:
+	cargo build {{ args }}
 
 fmt *args='--check':
 	cargo +nightly fmt {{ if args == "--write" { "" } else if args == "-w" { "" } else { args } }}

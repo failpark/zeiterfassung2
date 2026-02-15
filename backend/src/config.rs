@@ -57,6 +57,7 @@ pub struct CorsConfig {
 	pub allowed_origins: Vec<String>,
 }
 
+#[allow(clippy::result_large_err)] // figment::Error is a third-party type; size not controllable
 pub fn load_config() -> Result<AppConfig, figment::Error> {
 	dotenvy::dotenv().ok();
 	Figment::new()
