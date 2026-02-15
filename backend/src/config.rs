@@ -35,6 +35,17 @@ impl AppConfig {
 	}
 }
 
+impl Default for AppConfig {
+	fn default() -> Self {
+		Self {
+			server: ServerConfig::default(),
+			cors: CorsConfig::default(),
+			log_level: default_log_level(),
+			environment: default_environment(),
+		}
+	}
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
 	#[serde(default = "default_host")]
@@ -51,7 +62,16 @@ fn default_port() -> u16 {
 	8000
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+impl Default for ServerConfig {
+	fn default() -> Self {
+		Self {
+			host: default_host(),
+			port: default_port(),
+		}
+	}
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct CorsConfig {
 	#[serde(default)]
 	pub allowed_origins: Vec<String>,
