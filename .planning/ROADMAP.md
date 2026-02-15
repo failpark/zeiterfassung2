@@ -39,12 +39,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `just check`, `just fmt`, `just test`, and `just build` all function correctly from the justfile
   5. The unprotected health check endpoint returns 200; all protected routes return 401 without a valid Bearer token
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Initialize Axum crate with AppState, error type, and tower-http middleware stack (CORS, tracing)
-- [ ] 01-02: Wire auth middleware skeleton (Bearer extraction, 401 response) and protected/public router split
-- [ ] 01-03: Configure justfile with build, run, test, lint, format commands and verify all commands work
+- [ ] 01-01-PLAN.md — Axum crate with AppState, config, error type, tracing, CORS, health endpoint
+- [ ] 01-02-PLAN.md — Auth middleware skeleton (Bearer extraction, 401) and protected/public router split with tests
+- [ ] 01-03-PLAN.md — Justfile verification and updates for all build/run/test/lint/format commands
 
 ---
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Framework Foundation | 0/3 | Not started | - |
+| 1. Framework Foundation | 0/3 | Planning complete | - |
 | 2. Database Layer | 0/3 | Not started | - |
 | 3. Authentication | 0/3 | Not started | - |
 | 4. User Management | 0/3 | Not started | - |
