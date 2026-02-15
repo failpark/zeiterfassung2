@@ -1,6 +1,9 @@
-pub mod activity;
-pub mod client;
-pub mod login;
-pub mod project;
-pub mod tracking;
-pub mod user;
+pub mod health;
+
+// TODO: Port to Axum in Phase 3+
+// pub mod activity;
+// pub mod client;
+// pub mod login;
+// pub mod project;
+// pub mod tracking;
+// pub mod user;

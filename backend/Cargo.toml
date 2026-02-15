@@ -10,23 +10,27 @@ default-run = "backend"
 [dependencies]
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 argon2 = "0.5.2"
+axum = { version = "0.8", features = ["json"] }
 chrono = { version = "0.4.31", features = ["serde"] }
 diesel = { version = "2.1.4", features = ["chrono", "mysql"] }
 diesel_migrations = "2.1.0"
+dotenvy = "0.15"
+figment = { version = "0.10", features = ["toml", "env"] }
 jwt-simple = "0.11.9"
-rocket = { version = "0.5.0", features = ["json"] }
-rocket_cors = "0.6.0"
-rocket_db_pools = { version = "0.1.0", features = ["diesel_mysql"] }
-serde = "1.0.193"
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = "1"
 thiserror = "1.0.50"
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace", "request-id"] }
 tracing = "0.1.40"
-tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "registry", "json"] }
 tracing-test = "0.2.4"
 typeshare = "1.0.1"
+uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
-fake = { version = "2.9.1", features = ["derive", "chrono"]}
+fake = { version = "2.9.1", features = ["derive", "chrono"] }
 pretty_assertions = "1.4.0"
 rand = "0.8.5"
 test-case = "3.3.1"
