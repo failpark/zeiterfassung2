@@ -51,6 +51,9 @@ Recent decisions affecting current work:
 - [01-01]: Module named 'tracing' shadows crate; use ::tracing:: prefix for crate-qualified access in lib.rs
 - [01-01]: Secrets (DATABASE_URL, JWT_SECRET) env-only, never in config.toml
 - [01-01]: Old Rocket route files commented out of mod.rs, remain on disk for Phase 3+ porting
+- [01-02]: Use route_layer (not layer) on protected router so unknown paths return 404 not 401
+- [01-02]: Phase 1 auth is presence-only check; JWT validation deferred to Phase 3 require_auth replacement
+- [01-02]: Default impls on AppConfig/ServerConfig/CorsConfig enable test state without figment overhead
 - [01-03]: Added build recipe + alias b := build (was absent from justfile)
 - [01-03]: Suppressed result_large_err on load_config() — figment::Error size is not controllable (third-party type)
 - [01-03]: Applied nightly fmt to fix formatting diffs in backend.rs and tracing.rs
@@ -69,5 +72,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 01-03-PLAN.md — justfile commands verified (build, run, test, check, fmt), all exit 0, /health=200
+Stopped at: Completed 01-02-PLAN.md — Bearer auth middleware, protected/public router split, 6 integration tests all passing
 Resume file: None
