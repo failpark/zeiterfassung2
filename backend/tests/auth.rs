@@ -37,7 +37,10 @@ async fn ping_without_auth_returns_401() {
 
 	let body = response.into_body().collect().await.unwrap().to_bytes();
 	let body_str = std::str::from_utf8(&body).unwrap();
-	assert!(body_str.contains("UNAUTHORIZED"), "body should contain UNAUTHORIZED code: {body_str}");
+	assert!(
+		body_str.contains("UNAUTHORIZED"),
+		"body should contain UNAUTHORIZED code: {body_str}"
+	);
 }
 
 #[tokio::test]
