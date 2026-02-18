@@ -62,12 +62,12 @@ Plans:
   3. A test confirms the pool can acquire a connection and execute a simple query (e.g., `SELECT 1`) within the deadpool `interact()` closure
   4. The `db/` module compiles with `diesel-async` connection types replacing all `rocket_db_pools::Connection` usages
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 02-01: Add deadpool-diesel and diesel-async dependencies; configure pool in AppState; write interact() wrapper pattern
-- [ ] 02-02: Port all existing db/ modules from rocket_db_pools::Connection to deadpool-diesel pool; verify compilation
-- [ ] 02-03: Verify existing migrations run cleanly; add integration test for pool connectivity
+- [ ] 02-01-PLAN.md — Add deadpool-diesel dependency, DbPool type alias, pool init in AppState, InteractError handling, migrate recipe
+- [ ] 02-02-PLAN.md — Port all db/ modules from rocket_db_pools to sync MysqlConnection signatures
+- [ ] 02-03-PLAN.md — Wire startup migration runner, add pool connectivity integration tests
 
 ---
 
@@ -243,12 +243,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Framework Foundation | 0/3 | Planning complete | - |
-| 2. Database Layer | 0/3 | Not started | - |
+| 2. Database Layer | 0/3 | Planning complete | - |
 | 3. Authentication | 0/3 | Not started | - |
 | 4. User Management | 0/3 | Not started | - |
 | 5. Reference Data | 0/4 | Not started | - |
