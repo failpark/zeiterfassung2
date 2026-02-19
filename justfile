@@ -23,6 +23,9 @@ check *args:
 run *args:
 	cargo run {{ args }}
 
+migrate *args:
+	diesel migration run {{ args }}
+
 test *args:
 	cargo test {{ args }}
 

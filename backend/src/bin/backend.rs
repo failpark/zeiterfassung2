@@ -5,6 +5,17 @@ use zeiterfassung_backend::{
 	AppState,
 };
 
+fn redact_password(url: &str) -> String {
+	if let Some(at_pos) = url.find('@') {
+		if let Some(colon_pos) = url[..at_pos].rfind(':') {
+			let mut redacted = url.to_string();
+			redacted.replace_range((colon_pos + 1)..at_pos, "***");
+			return redacted;
+		}
+	}
+	url.to_string()
+}
+
 #[tokio::main]
 async fn main() {
 	let config = zeiterfassung_backend::config::load_config().expect("Failed to load configuration");
@@ -17,8 +28,25 @@ async fn main() {
 		config.server.port
 	);
 
+	let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+	let manager = deadpool_diesel::mysql::Manager::new(
+		database_url.clone(),
+		deadpool_diesel::Runtime::Tokio1,
+	);
+	let db_pool = deadpool_diesel::mysql::Pool::builder(manager)
+		.max_size(10)
+		.build()
+		.expect("Failed to build database pool");
+
+	tracing::info!(
+		pool_size = 10,
+		connection = %redact_password(&database_url),
+		"Database pool initialized"
+	);
+
 	let state = AppState {
 		config: Arc::new(config),
+		db_pool,
 	};
 
 	let listener = tokio::net::TcpListener::bind(format!(
