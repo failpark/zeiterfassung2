@@ -56,6 +56,18 @@ impl From<argon2::password_hash::Error> for Error {
 	}
 }
 
+impl From<deadpool_diesel::InteractError> for Error {
+	fn from(_: deadpool_diesel::InteractError) -> Self {
+		Error::Internal
+	}
+}
+
+impl From<deadpool_diesel::PoolError> for Error {
+	fn from(_: deadpool_diesel::PoolError) -> Self {
+		Error::Internal
+	}
+}
+
 #[derive(Serialize, Debug, Clone)]
 pub struct FieldError {
 	pub field: String,

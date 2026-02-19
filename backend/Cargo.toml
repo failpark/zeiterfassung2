@@ -12,6 +12,7 @@ anyhow = { version = "1.0.75", features = ["backtrace"] }
 argon2 = "0.5.2"
 axum = { version = "0.8", features = ["json"] }
 chrono = { version = "0.4.31", features = ["serde"] }
+deadpool-diesel = { version = "0.6.1", features = ["mysql"] }
 diesel = { version = "2.1.4", features = ["chrono", "mysql"] }
 diesel_migrations = "2.1.0"
 dotenvy = "0.15"
@@ -35,6 +36,6 @@ http-body-util = "0.1"
 pretty_assertions = "1.4.0"
 rand = "0.8.5"
 test-case = "3.3.1"
-diesel = { version = "2.1.4", features = ["chrono", "mysql", "r2d2"] }
+diesel = { version = "2.1.4", features = ["chrono", "mysql"] }
 paste = "1.0.14"
 itertools = "0.12.1"
