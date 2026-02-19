@@ -1,9 +1,7 @@
-use rocket_db_pools::{
-	diesel::{
-		insert_into,
-		prelude::*,
-	},
-	Connection,
+use diesel::{
+	insert_into,
+	prelude::*,
+	MysqlConnection,
 };
 use tracing::trace;
 
@@ -16,7 +14,6 @@ use crate::{
 		PaginationResult,
 	},
 	schema::*,
-	DB,
 };
 
 /// Struct representing a row in table `tracking`
@@ -120,37 +117,30 @@ pub struct UpdateTracking {
 
 impl Tracking {
 	/// Insert a new row into `tracking` with a given [`CreateTracking`]
-	pub async fn create(db: &mut Connection<DB>, item: &CreateTracking) -> QueryResult<Self> {
+	pub fn create(db: &mut MysqlConnection, item: &CreateTracking) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Inserting into tracking table: {:?}", item);
-		db.transaction(|mut conn| {
-			Box::pin(async move {
-				insert_into(tracking)
-					.values(item)
-					.execute(&mut conn)
-					.await?;
-				tracking
-					.select(Tracking::as_select())
-					.filter(id.eq(last_insert_id()))
-					.first::<Self>(&mut conn)
-					.await
-			})
+		db.transaction(|conn| {
+			insert_into(tracking).values(item).execute(conn)?;
+			tracking
+				.select(Tracking::as_select())
+				.filter(id.eq(last_insert_id()))
+				.first::<Self>(conn)
 		})
-		.await
 	}
 
 	/// Get a row from `tracking`, identified by the primary key
-	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
+	pub fn read(db: &mut MysqlConnection, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Reading from tracking table: {}", param_id);
-		tracking.filter(id.eq(param_id)).first::<Self>(db).await
+		tracking.filter(id.eq(param_id)).first::<Self>(db)
 	}
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
-	pub async fn paginate(
-		db: &mut Connection<DB>,
+	pub fn paginate(
+		db: &mut MysqlConnection,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -162,12 +152,11 @@ impl Tracking {
 			page_size
 		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
-		let total_items = tracking.count().get_result(db).await?;
+		let total_items = tracking.count().get_result(db)?;
 		let items = tracking
 			.limit(page_size)
 			.offset(page * page_size)
-			.load::<Self>(db)
-			.await?;
+			.load::<Self>(db)?;
 
 		Ok(PaginationResult {
 			items,
@@ -180,45 +169,36 @@ impl Tracking {
 	}
 
 	/// Update a row in `tracking`, identified by the primary key with [`UpdateTracking`]
-	pub async fn update(
-		db: &mut Connection<DB>,
+	pub fn update(
+		db: &mut MysqlConnection,
 		param_id: i32,
 		item: &UpdateTracking,
 	) -> QueryResult<Self> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Updating tracking table: {} with {:?}", param_id, item);
-		db.transaction(|mut conn| {
-			Box::pin(async move {
-				diesel::update(tracking.filter(id.eq(param_id)))
-					.set(item)
-					.execute(&mut conn)
-					.await?;
-				tracking
-					.filter(id.eq(param_id))
-					.first::<Self>(&mut conn)
-					.await
-			})
+		db.transaction(|conn| {
+			diesel::update(tracking.filter(id.eq(param_id)))
+				.set(item)
+				.execute(conn)?;
+			tracking.filter(id.eq(param_id)).first::<Self>(conn)
 		})
-		.await
 	}
 
 	/// Delete a row in `tracking`, identified by the primary key
-	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
+	pub fn delete(db: &mut MysqlConnection, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Deleting from tracking table: {}", param_id);
-		diesel::delete(tracking.filter(id.eq(param_id)))
-			.execute(db)
-			.await
+		diesel::delete(tracking.filter(id.eq(param_id))).execute(db)
 	}
 
-	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+	pub fn last_page(db: &mut MysqlConnection, page_size: i64) -> QueryResult<i64> {
 		use crate::schema::tracking::dsl::*;
 
 		trace!("Getting last page of project table for page_size {page_size}");
 
-		let total_items: i64 = tracking.count().get_result(db).await?;
+		let total_items: i64 = tracking.count().get_result(db)?;
 		// index starts at 0
 		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
 	}

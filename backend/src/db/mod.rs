@@ -9,12 +9,11 @@ use serde::{
 	Serialize,
 };
 
-// TODO: Port from Rocket to Axum/deadpool-diesel in Phase 3+
-// pub mod activity;
+pub mod activity;
 pub mod client;
-// pub mod helper;
-// pub mod project;
-// pub mod tracking;
+pub mod helper;
+pub mod project;
+pub mod tracking;
 pub mod user;
 
 /// Result of a `.paginate` function

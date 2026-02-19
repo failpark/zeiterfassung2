@@ -1,7 +1,5 @@
-use rocket_db_pools::{
-	diesel::prelude::*,
-	Connection,
-};
+use diesel::prelude::*;
+use diesel::MysqlConnection;
 use serde::{
 	Deserialize,
 	Serialize,
@@ -27,7 +25,6 @@ use crate::{
 		activity::Activity,
 		PaginationResult,
 	},
-	DB,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,8 +79,8 @@ pub struct UpdateTracking {
 }
 
 impl Tracking {
-	pub async fn create(
-		db: &mut Connection<DB>,
+	pub fn create(
+		db: &mut MysqlConnection,
 		tracking: &CreateTracking,
 	) -> Result<Tracking, diesel::result::Error> {
 		trace!("Tracking middle layer: create");
@@ -101,7 +98,7 @@ impl Tracking {
 			description: tracking.description.to_owned(),
 		};
 		trace!("Creating Tracking");
-		let tracking_db = TrackingDB::create(db, &tracking_db).await.map_err(|e| {
+		let tracking_db = TrackingDB::create(db, &tracking_db).map_err(|e| {
 			error!("Error creating tracking: {:#?}", e);
 			e
 		})?;
@@ -111,12 +108,10 @@ impl Tracking {
 				tracking_id: tracking_db.id,
 				activity_id: i,
 			};
-			TrackingToActivityDB::create(db, &tracking_to_activity)
-				.await
-				.map_err(|e| {
-					error!("Error creating tracking to activity: {:#?}", e);
-					e
-				})?;
+			TrackingToActivityDB::create(db, &tracking_to_activity).map_err(|e| {
+				error!("Error creating tracking to activity: {:#?}", e);
+				e
+			})?;
 		}
 		Ok(Tracking {
 			id: tracking_db.id,
@@ -136,21 +131,19 @@ impl Tracking {
 		})
 	}
 
-	pub async fn read(
-		db: &mut Connection<DB>,
+	pub fn read(
+		db: &mut MysqlConnection,
 		param_id: i32,
 	) -> Result<Tracking, diesel::result::Error> {
 		trace!("Tracking middle layer: read");
-		let tracking_db = TrackingDB::read(db, param_id).await.map_err(|e| {
+		let tracking_db = TrackingDB::read(db, param_id).map_err(|e| {
 			error!("Error reading tracking: {:#?}", e);
 			e
 		})?;
-		let activities = TrackingToActivityDB::get_activity_ids(db, param_id)
-			.await
-			.map_err(|e| {
-				error!("Error getting activities: {:#?}", e);
-				e
-			})?;
+		let activities = TrackingToActivityDB::get_activity_ids(db, param_id).map_err(|e| {
+			error!("Error getting activities: {:#?}", e);
+			e
+		})?;
 		Ok(Tracking {
 			id: tracking_db.id,
 			client_id: tracking_db.client_id,
@@ -169,13 +162,12 @@ impl Tracking {
 		})
 	}
 
-	pub async fn paginate(
-		db: &mut Connection<DB>,
+	pub fn paginate(
+		db: &mut MysqlConnection,
 		page: i64,
 		page_size: i64,
 	) -> Result<PaginationResult<Tracking>, diesel::result::Error> {
 		trace!("Tracking middle layer: paginate");
-		use rocket_db_pools::diesel::prelude::*;
 
 		use crate::schema::activity;
 
@@ -184,19 +176,16 @@ impl Tracking {
 			page,
 			page_size
 		);
-		let pagination = TrackingDB::paginate(db, page, page_size)
-			.await
-			.map_err(|e| {
-				error!("Error paginating tracking: {:#?}", e);
-				e
-			})?;
+		let pagination = TrackingDB::paginate(db, page, page_size).map_err(|e| {
+			error!("Error paginating tracking: {:#?}", e);
+			e
+		})?;
 		let tracking_db = pagination.items;
 		trace!("Getting all activities belonging to each tracking");
 		let activities = TrackingToActivityDB::belonging_to(&tracking_db)
 			.inner_join(activity::table)
 			.select((TrackingToActivityDB::as_select(), Activity::as_select()))
 			.load(db)
-			.await
 			.map_err(|e| {
 				error!("Error getting activities: {:#?}", e);
 				e
@@ -267,8 +256,8 @@ impl Tracking {
 		}
 	}
 
-	pub async fn update(
-		db: &mut Connection<DB>,
+	pub fn update(
+		db: &mut MysqlConnection,
 		param_id: i32,
 		tracking: &UpdateTracking,
 	) -> Result<Tracking, diesel::result::Error> {
@@ -292,60 +281,54 @@ impl Tracking {
 		let default_update = UpdateTrackingDB::default();
 		if tracking_db == default_update {
 			trace!("No update needed for tracking");
-			let tracking_db = TrackingDB::read(db, param_id).await.map_err(|e| {
+			let tracking_db = TrackingDB::read(db, param_id).map_err(|e| {
 				error!("Error reading tracking: {:#?}", e);
 				e
 			})?;
 			tracking_update = Self::from_tracking(tracking_db);
 		} else {
-			let tracking_db = TrackingDB::update(db, param_id, &tracking_db)
-				.await
-				.map_err(|e| {
-					error!("Error updating tracking: {:#?}", e);
-					e
-				})?;
+			let tracking_db = TrackingDB::update(db, param_id, &tracking_db).map_err(|e| {
+				error!("Error updating tracking: {:#?}", e);
+				e
+			})?;
 			tracking_update = Self::from_tracking(tracking_db);
 		}
 		if tracking.activities.is_some() {
 			let activities = tracking.activities.clone().unwrap();
 			// just drop the old ones and add the new ones
-			TrackingToActivityDB::delete_by_tracking_id(db, param_id)
-				.await
-				.map_err(|e| {
-					error!("Error deleting tracking to activity: {:#?}", e);
-					e
-				})?;
+			TrackingToActivityDB::delete_by_tracking_id(db, param_id).map_err(|e| {
+				error!("Error deleting tracking to activity: {:#?}", e);
+				e
+			})?;
 			for i in activities {
 				let tracking_to_activity = CreateTrackingToActivityDB {
 					tracking_id: param_id,
 					activity_id: i,
 				};
-				TrackingToActivityDB::create(db, &tracking_to_activity)
-					.await
-					.map_err(|e| {
-						error!("Error creating tracking to activity: {:#?}", e);
-						e
-					})?;
+				TrackingToActivityDB::create(db, &tracking_to_activity).map_err(|e| {
+					error!("Error creating tracking to activity: {:#?}", e);
+					e
+				})?;
 			}
 			tracking_update.activities = tracking.activities.to_owned().unwrap();
 		}
 		Ok(tracking_update)
 	}
 
-	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
+	pub fn delete(db: &mut MysqlConnection, param_id: i32) -> QueryResult<usize> {
 		trace!("Tracking middle layer: delete");
 		trace!(
 			"Tracking middle layer tracking to activity delete by tracking id {}",
 			param_id
 		);
-		TrackingToActivityDB::delete_by_tracking_id(db, param_id).await?;
+		TrackingToActivityDB::delete_by_tracking_id(db, param_id)?;
 		trace!("Tracking middle layer tracking delete by id {}", param_id);
-		TrackingDB::delete(db, param_id).await
+		TrackingDB::delete(db, param_id)
 	}
 
-	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+	pub fn last_page(db: &mut MysqlConnection, page_size: i64) -> QueryResult<i64> {
 		trace!("Tracking middle layer: last_page");
-		TrackingDB::last_page(db, page_size).await
+		TrackingDB::last_page(db, page_size)
 	}
 }
 
