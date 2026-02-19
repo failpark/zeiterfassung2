@@ -5,29 +5,30 @@
 See: .planning/PROJECT.md (updated 2026-02-13)
 
 **Core value:** Employees can accurately record and retrieve time entries with performed vs billed hour tracking for client billing
-**Current focus:** Phase 1 - Framework Foundation
+**Current focus:** Phase 2 - Database Layer
 
 ## Current Position
 
-Phase: 1 of 9 (Framework Foundation)
-Plan: 3 of 3 in current phase
+Phase: 2 of 9 (Database Layer)
+Plan: 1 of 3 in current phase
 Status: Executing
-Last activity: 2026-02-15 — Plan 01-03 complete: justfile build recipe, alias b, clippy clean, fmt passing, /health=200
+Last activity: 2026-02-19 — Plan 02-01 complete: deadpool-diesel pool, DbPool type, AppState.db_pool, InteractError/PoolError From impls, just migrate recipe
 
-Progress: [██░░░░░░░░] 11%
+Progress: [███░░░░░░░] 15%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 3 min
-- Total execution time: 0.05 hours
+- Total execution time: 0.06 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-framework-foundation | 3 | 9 min | 3 min |
+| 02-database-layer | 1 | 2 min | 2 min |
 
 **Recent Trend:**
 - Last 5 plans: 3 min
@@ -57,6 +58,10 @@ Recent decisions affecting current work:
 - [01-03]: Added build recipe + alias b := build (was absent from justfile)
 - [01-03]: Suppressed result_large_err on load_config() — figment::Error size is not controllable (third-party type)
 - [01-03]: Applied nightly fmt to fix formatting diffs in backend.rs and tracing.rs
+- [02-01]: deadpool_diesel::Runtime::Tokio1 — matches tokio runtime used by axum
+- [02-01]: Pool max_size=10 hardcoded default; not yet exposed through AppConfig
+- [02-01]: DATABASE_URL read via std::env::var directly (not figment) — locked decision, secrets env-only
+- [02-01]: redact_password() strips between last ':' and '@' to handle mysql://user:pass@host patterns
 
 ### Pending Todos
 
@@ -71,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: Completed 01-02-PLAN.md — Bearer auth middleware, protected/public router split, 6 integration tests all passing
+Last session: 2026-02-19
+Stopped at: Completed 02-01-PLAN.md — deadpool-diesel pool init, AppState.db_pool, InteractError From impl, just migrate recipe
 Resume file: None
