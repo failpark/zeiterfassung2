@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-13)
 ## Current Position
 
 Phase: 2 of 9 (Database Layer)
-Plan: 1 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: Executing
-Last activity: 2026-02-19 — Plan 02-01 complete: deadpool-diesel pool, DbPool type, AppState.db_pool, InteractError/PoolError From impls, just migrate recipe
+Last activity: 2026-02-19 — Plan 02-03 complete: startup migration runner via interact(), pool integration tests (SELECT 1, concurrent connections), fixed broken test state
 
-Progress: [███░░░░░░░] 15%
+Progress: [████░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [███░░░░░░░] 15%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-framework-foundation | 3 | 9 min | 3 min |
-| 02-database-layer | 1 | 2 min | 2 min |
+| 02-database-layer | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
 - Last 5 plans: 3 min
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - [02-01]: Pool max_size=10 hardcoded default; not yet exposed through AppConfig
 - [02-01]: DATABASE_URL read via std::env::var directly (not figment) — locked decision, secrets env-only
 - [02-01]: redact_password() strips between last ':' and '@' to handle mysql://user:pass@host patterns
+- [Phase 02-03]: Self-contained migration block in binary using embed_migrations — avoids wave-2 cross-plan dependency on db::run_migrations
+- [Phase 02-03]: Lazy pool in test_state() uses placeholder URL — deadpool never connects at build time, so tests not exercising DB routes work without live DB
+- [Phase 02-03]: Rocket db sub-modules commented out in db/mod.rs — unblocks compilation after pub mod db exposed in lib.rs; Phase 3+ will port them
 
 ### Pending Todos
 
@@ -69,7 +72,6 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Research]: deadpool-diesel exact API (interact() closure shape) is MEDIUM confidence — verify against docs.rs before Phase 2
 - [Research]: TanStack Router v1.x migration from old object-based API needs design before Phase 3 frontend work
 - [Research]: MariaDB target version unknown — affects whether RETURNING clause is available (affects Phase 7-8 migration design)
 - [Research]: tower-governor rate limiting crate maintenance status unverified — decide before Phase 3
@@ -77,5 +79,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 02-01-PLAN.md — deadpool-diesel pool init, AppState.db_pool, InteractError From impl, just migrate recipe
+Stopped at: Completed 02-03-PLAN.md — startup migration runner, pool integration tests, fixed broken test state
 Resume file: None
