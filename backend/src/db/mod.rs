@@ -1,26 +1,21 @@
-use rocket::{
-	Build,
-	Rocket,
-};
-use rocket_db_pools::{
-	diesel::{
-		prelude::*,
-		MysqlPool,
-	},
-	Database,
+use diesel::MysqlConnection;
+use diesel_migrations::{
+	embed_migrations,
+	EmbeddedMigrations,
+	MigrationHarness,
 };
 use serde::{
 	Deserialize,
 	Serialize,
 };
-use tracing::trace;
 
-pub mod activity;
+// TODO: Port from Rocket to Axum/deadpool-diesel in Phase 3+
+// pub mod activity;
 pub mod client;
-pub mod project;
-pub mod tracking;
-pub mod user;
 // pub mod helper;
+// pub mod project;
+// pub mod tracking;
+pub mod user;
 
 /// Result of a `.paginate` function
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -37,35 +32,12 @@ pub struct PaginationResult<T> {
 	pub num_pages: i64,
 }
 
-#[derive(Database)]
-#[database("zeiterfassung")]
-pub struct DB(MysqlPool);
-
 diesel::sql_function!(fn last_insert_id() -> Integer);
 
-pub async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
-	use diesel_migrations::{
-		embed_migrations,
-		EmbeddedMigrations,
-		MigrationHarness,
-	};
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../migrations");
 
-	trace!("Running migrations");
-	const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../migrations");
-
-	let db_url: String = rocket
-		.figment()
-		.extract_inner("databases.zeiterfassung.url")
-		.expect("DB not configured");
-
-	rocket::tokio::task::spawn_blocking(move || {
-		diesel::MysqlConnection::establish(&db_url)
-			.expect("No database")
-			.run_pending_migrations(MIGRATIONS)
-			.expect("Invalid migrations");
-	})
-	.await
-	.expect("tokio doesn't work");
-
-	rocket
+pub fn run_migrations(conn: &mut MysqlConnection) {
+	conn.run_pending_migrations(MIGRATIONS)
+		.expect("Failed to run database migrations");
+	::tracing::info!("Database migrations applied successfully");
 }

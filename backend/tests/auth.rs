@@ -16,8 +16,19 @@ use zeiterfassung_backend::{
 };
 
 fn test_state() -> AppState {
+	// Use a placeholder URL — pool.build() does not connect; connections are lazy.
+	// Tests that do not exercise DB routes do not call pool.get(), so no connection is made.
+	let manager = deadpool_diesel::mysql::Manager::new(
+		"mysql://test:test@localhost/test",
+		deadpool_diesel::Runtime::Tokio1,
+	);
+	let db_pool = deadpool_diesel::mysql::Pool::builder(manager)
+		.max_size(1)
+		.build()
+		.expect("Failed to build test pool");
 	AppState {
 		config: Arc::new(AppConfig::default()),
+		db_pool,
 	}
 }
 

@@ -44,6 +44,28 @@ async fn main() {
 		"Database pool initialized"
 	);
 
+	// Run pending migrations at startup — before accepting any requests
+	{
+		use diesel_migrations::{
+			embed_migrations,
+			EmbeddedMigrations,
+			MigrationHarness,
+		};
+		const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../migrations");
+
+		let conn = db_pool
+			.get()
+			.await
+			.expect("Could not get DB connection for migrations");
+		conn.interact(|conn| {
+			conn.run_pending_migrations(MIGRATIONS).map(|_| ())
+		})
+		.await
+		.expect("Migration interact() failed")
+		.expect("Migration execution failed");
+		tracing::info!("Database migrations applied successfully");
+	}
+
 	let state = AppState {
 		config: Arc::new(config),
 		db_pool,
