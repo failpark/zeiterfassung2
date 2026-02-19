@@ -27,18 +27,18 @@ use tower_http::{
 };
 
 pub mod config;
+pub mod db;
 pub mod error;
 mod middleware;
 mod routes;
+pub mod schema;
 pub mod state;
 pub mod tracing;
 
 // TODO: Port to Axum in Phase 3+
 // mod auth;
 // mod catchers;
-// mod db;
 // mod guard;
-// mod schema;
 // #[cfg(test)] mod test;
 
 pub use config::AppConfig;

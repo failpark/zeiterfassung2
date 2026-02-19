@@ -4,13 +4,10 @@ use fake::{
 	Dummy,
 	Fake,
 };
-use rocket_db_pools::{
-	diesel::{
-		insert_into,
-		prelude::*,
-		RunQueryDsl,
-	},
-	Connection,
+use diesel::{
+	insert_into,
+	prelude::*,
+	MysqlConnection,
 };
 use tracing::trace;
 
@@ -18,10 +15,8 @@ use super::{
 	last_insert_id,
 	PaginationResult,
 };
-use crate::{
-	schema::*,
-	DB,
-};
+use crate::schema::*;
+
 /// Struct representing a row in table `client`
 #[derive(
 	Debug, Clone, serde::Serialize, serde::Deserialize, Queryable, Selectable, QueryableByName,
@@ -69,34 +64,30 @@ pub struct UpdateClient {
 
 impl Client {
 	/// Insert a new row into `client` with a given [`CreateClient`]
-	pub async fn create(db: &mut Connection<DB>, item: &CreateClient) -> QueryResult<Self> {
+	pub fn create(db: &mut MysqlConnection, item: &CreateClient) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Inserting into client table: {:?}", item);
-		db.transaction(|mut conn| {
-			Box::pin(async move {
-				insert_into(client).values(item).execute(&mut conn).await?;
-				client
-					.select(Client::as_select())
-					.filter(id.eq(last_insert_id()))
-					.first::<Self>(&mut conn)
-					.await
-			})
+		db.transaction(|conn| {
+			insert_into(client).values(item).execute(conn)?;
+			client
+				.select(Client::as_select())
+				.filter(id.eq(last_insert_id()))
+				.first::<Self>(conn)
 		})
-		.await
 	}
 
 	/// Get a row from `client`, identified by the primary key
-	pub async fn read(db: &mut Connection<DB>, param_id: i32) -> QueryResult<Self> {
+	pub fn read(db: &mut MysqlConnection, param_id: i32) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Reading from client table: {:?}", param_id);
-		client.filter(id.eq(param_id)).first::<Self>(db).await
+		client.filter(id.eq(param_id)).first::<Self>(db)
 	}
 
 	/// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
-	pub async fn paginate(
-		db: &mut Connection<DB>,
+	pub fn paginate(
+		db: &mut MysqlConnection,
 		page: i64,
 		page_size: i64,
 	) -> QueryResult<PaginationResult<Self>> {
@@ -108,12 +99,11 @@ impl Client {
 			page_size
 		);
 		let page_size = if page_size < 1 { 1 } else { page_size };
-		let total_items = client.count().get_result(db).await?;
+		let total_items = client.count().get_result(db)?;
 		let items = client
 			.limit(page_size)
 			.offset(page * page_size)
-			.load::<Self>(db)
-			.await?;
+			.load::<Self>(db)?;
 
 		Ok(PaginationResult {
 			items,
@@ -126,47 +116,40 @@ impl Client {
 	}
 
 	/// Update a row in `client`, identified by the primary key with [`UpdateClient`]
-	pub async fn update(
-		db: &mut Connection<DB>,
+	pub fn update(
+		db: &mut MysqlConnection,
 		param_id: i32,
 		item: &UpdateClient,
 	) -> QueryResult<Self> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Updating client table: {} with {:?}", param_id, item);
-		db.transaction(|mut conn| {
-			Box::pin(async move {
-				diesel::update(client.filter(id.eq(param_id)))
-					.set(item)
-					.execute(&mut conn)
-					.await?;
+		db.transaction(|conn| {
+			diesel::update(client.filter(id.eq(param_id)))
+				.set(item)
+				.execute(conn)?;
 
-				client
-					.select(Client::as_select())
-					.filter(id.eq(last_insert_id()))
-					.first::<Self>(&mut conn)
-					.await
-			})
+			client
+				.select(Client::as_select())
+				.filter(id.eq(last_insert_id()))
+				.first::<Self>(conn)
 		})
-		.await
 	}
 
 	/// Delete a row in `client`, identified by the primary key
-	pub async fn delete(db: &mut Connection<DB>, param_id: i32) -> QueryResult<usize> {
+	pub fn delete(db: &mut MysqlConnection, param_id: i32) -> QueryResult<usize> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Deleting from client table: {}", param_id);
-		diesel::delete(client.filter(id.eq(param_id)))
-			.execute(db)
-			.await
+		diesel::delete(client.filter(id.eq(param_id))).execute(db)
 	}
 
-	pub async fn last_page(db: &mut Connection<DB>, page_size: i64) -> QueryResult<i64> {
+	pub fn last_page(db: &mut MysqlConnection, page_size: i64) -> QueryResult<i64> {
 		use crate::schema::client::dsl::*;
 
 		trace!("Getting last page of client table for page_size {page_size}");
 
-		let total_items: i64 = client.count().get_result(db).await?;
+		let total_items: i64 = client.count().get_result(db)?;
 		// index starts at 0
 		Ok((total_items / page_size + i64::from(total_items % page_size != 0)) - 1)
 	}
