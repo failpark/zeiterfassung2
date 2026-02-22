@@ -85,12 +85,12 @@ Plans:
   3. The system role (`user` / `admin`) is stored and returned as a typed enum, not a raw string; deserialization of an unknown role value returns an error
   4. A user can log out by discarding the token client-side; the frontend login page redirects to the main view on success
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: Implement /auth/login handler with Argon2 password verification and JWT issuance; wire tokenizer with configurable expiration
-- [ ] 03-02: Replace raw sys_role string with typed Role enum in Rust structs and Diesel schema; update login response type
-- [ ] 03-03: Update frontend login page to POST to Axum endpoint, store token, and redirect; implement logout (clear token)
+- [ ] 03-01-PLAN.md — Role enum, AuthConfig, Tokenizer in AppState, AuthUser/AdminUser extractors
+- [ ] 03-02-PLAN.md — POST /auth/login and /auth/logout handlers, remove require_auth middleware
+- [ ] 03-03-PLAN.md — Frontend authApi URL update, AuthContext logout, TanStack Router v1 migration
 
 ---
 
